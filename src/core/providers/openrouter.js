@@ -1,4 +1,4 @@
-import { validateQuestRequest } from "../contracts.js";
+import { normalizeAssistantResponse, validateQuestRequest } from "../contracts.js";
 import { ProviderConfigurationError, ProviderRequestError } from "../errors.js";
 
 const DEFAULT_MODEL = "openrouter/free";
@@ -58,7 +58,7 @@ export function createOpenRouterProvider(options = {}) {
           body: JSON.stringify({
             model: config.model,
             messages: [
-              { role: "system", content: "You are QuestMind, a concise and honest board-game companion. Explain rules clearly and label uncertainty." },
+              { role: "system", content: "You are QuestMind, a concise and grounded board-game companion. Answer only the user's exact question in plain language, usually in 1-3 short sentences. Use the supplied game, mode, player count, rule text, and image context first. Do not add tangents, strategy advice, or unrelated rules. Never invent citations, URLs, browsing, or certainty. If the supplied context is insufficient to verify the answer, say so plainly and ask for the relevant rulebook page, rule text, or clearer image. Return exactly two labeled lines: ANSWER: <concise answer or inability to verify> and EVIDENCE: <relevant supplied rule section/source, or 'Not provided — please share the relevant rulebook page, rule text, or image.'>." },
               { role: "user", content: messageContent(request) },
             ],
           }),
@@ -77,8 +77,10 @@ export function createOpenRouterProvider(options = {}) {
         if (typeof text !== "string" || !text.trim()) {
           throw new ProviderRequestError("OpenRouter returned no assistant message.", "PROVIDER_INVALID_RESPONSE");
         }
+        const normalized = normalizeAssistantResponse(text);
         return {
-          text: text.trim(),
+          text: normalized.answer,
+          evidence: normalized.evidence,
           provider: "openrouter",
           context: {
             game: request.game,

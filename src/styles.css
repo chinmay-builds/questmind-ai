@@ -108,6 +108,7 @@ h1 em { color: var(--blue); font-style: normal; }
 .avatar { display: grid; place-items: center; width: 23px; height: 23px; background: var(--blue); color: var(--white); border: 1px solid var(--ink); font: 10px "DM Mono", monospace; }
 .message-user .avatar { background: var(--red); }
 .message p { margin: 0; border: 1px solid var(--ink); padding: 15px 17px; background: var(--paper); line-height: 1.5; font-size: 14px; }
+.message-evidence { padding: 8px 4px 0; color: var(--muted); font: 9px "DM Mono", monospace; line-height: 1.45; }
 .message-assistant p { background: #eef1fb; }
 .message-user p { background: var(--blue); color: var(--white); border-color: var(--blue); }
 .message-images { display: flex; gap: 6px; margin-top: 8px; }

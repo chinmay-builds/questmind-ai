@@ -78,11 +78,17 @@ function renderAttachments() {
   }
 }
 
-function addMessage(kind, text, imageUrls = []) {
+function addMessage(kind, text, imageUrls = [], evidence = "") {
   const message = document.createElement("article");
   message.className = `message message-${kind}`;
   message.innerHTML = `<div class="message-meta"><span class="avatar">${kind === "assistant" ? "Q" : "YOU"}</span><span>${kind === "assistant" ? "QUESTMIND" : "YOU"}</span><time>JUST NOW</time></div><p></p>`;
   message.querySelector("p").textContent = text;
+  if (evidence) {
+    const source = document.createElement("div");
+    source.className = "message-evidence";
+    source.textContent = `EVIDENCE / ${evidence}`;
+    message.append(source);
+  }
   if (imageUrls.length) {
     const images = document.createElement("div");
     images.className = "message-images";
@@ -159,7 +165,7 @@ composer.addEventListener("submit", async (event) => {
     questionInput.value = "";
     attachments.splice(0).forEach(({ url }) => URL.revokeObjectURL(url));
     renderAttachments();
-    window.setTimeout(() => addMessage("assistant", response.text), 260);
+    window.setTimeout(() => addMessage("assistant", response.text, [], response.evidence), 260);
     composerNote.textContent = useServerProvider ? "CONNECTED VIA QUESTMIND CORE." : "LOCAL MOCK / NO AI CONNECTED";
   } catch (error) {
     addMessage("assistant", `ERROR: ${error.message} Please try again or check the server configuration.`);
