@@ -125,8 +125,17 @@ as HTML.
 ## Rulebook coverage
 
 `src/rules.js` is the shared game/mode catalog. Every one of the 20 games and
-every listed mode has a context record and an evidence label, but the starter
-catalog intentionally contains no invented rule text. Until verified material
-is supplied, QuestMind says that the answer cannot be verified and asks for a
-rulebook page, rule text, or clearer image. Player bounds are validated from
-the same catalog, including solo and two-player mode adjustments.
+every listed mode has a context record, an evidence label, and an optional
+source URL. The catalog intentionally contains no invented rule text. The
+Scythe / Automa entry includes a narrow, verified starter note and links to
+Stonemaier Games' official rules page:
+
+<https://stonemaiergames.com/games/scythe/scythe-rules/>
+
+That source link does not mean the complete Automa deck logic is embedded:
+turn-by-turn actions, cards, and edge cases remain unavailable until the
+relevant official rulebook pages are supplied and transcribed into the
+catalog. For every other unpopulated context, QuestMind says the answer
+cannot be verified and asks for a rulebook page, rule text, or clearer image.
+Player bounds are validated from the same catalog, including solo and
+two-player mode adjustments.

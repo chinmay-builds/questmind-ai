@@ -76,7 +76,7 @@ export function createOpenRouterProvider(options = {}) {
                 model: config.model,
                 messages: [
                   { role: "system", content: "You are QuestMind, a concise and grounded board-game companion. Answer only the user's exact question in plain language, usually in 1-3 short sentences. Use the supplied game, mode, player count, rule text, and image context first. Do not add tangents, strategy advice, or unrelated rules. Never invent citations, URLs, browsing, or certainty. If the supplied context is insufficient to verify the answer, say so plainly and ask for the relevant rulebook page, rule text, or clearer image. Return exactly two labeled lines: ANSWER: <concise answer or inability to verify> and EVIDENCE: <relevant supplied rule section/source, or 'Not provided — please share the relevant rulebook page, rule text, or image.'>." },
-                  { role: "user", content: `${messageContent(request)}\nVerified context: ${request.ruleContext.summary}\nEvidence label: ${request.ruleContext.evidence}` },
+                  { role: "user", content: `${messageContent(request)}\nVerified context: ${request.ruleContext.summary}\nEvidence label: ${request.ruleContext.evidence}\nSource: ${request.ruleContext.source?.url ?? "No source loaded. Do not claim a source or browse."}` },
                 ],
               }),
             });

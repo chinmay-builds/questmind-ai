@@ -95,6 +95,22 @@ test("includes honest rule context in provider requests and evidence", async () 
   assert.equal(result.evidence, "Rulebook context not provided.");
 });
 
+test("uses official provenance for the narrow Scythe Automa starter context", async () => {
+  const context = getRuleContext("Scythe", "Automa");
+  assert.match(context.summary, /official solo opponent/);
+  assert.equal(context.source.url, "https://stonemaiergames.com/games/scythe/scythe-rules/");
+  const provider = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      assert.match(body.messages[1].content, /stonemaiergames\.com\/games\/scythe\/scythe-rules/);
+      return new Response(JSON.stringify({ choices: [{ message: { content: "ANSWER: I need the Automa card or rulebook page to verify this.\nEVIDENCE: Stonemaier Games, Scythe Rules." } }] }), { status: 200 });
+    },
+  });
+  const result = await provider.answer({ game: "Scythe", mode: "Automa", playerCount: 2, question: "What does this Automa card do?" });
+  assert.match(result.evidence, /Stonemaier Games/);
+});
+
 test("normalizes an OpenRouter response and sends context without exposing browser code", async () => {
   let request;
   const provider = createOpenRouterProvider({
