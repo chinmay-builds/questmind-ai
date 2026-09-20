@@ -19,7 +19,7 @@ export function validateQuestRequest(input) {
     throw new InvalidQuestRequestError("A request object is required.");
   }
 
-  const { game, mode, playerCount, question, attachments = [], model = "rules-sage" } = input;
+  const { game, mode, playerCount, question, model, webSearch, attachments = [] } = input;
   if (typeof game !== "string" || !game.trim()) {
     throw new InvalidQuestRequestError("game must be a non-empty string.");
   }
@@ -35,7 +35,7 @@ export function validateQuestRequest(input) {
   if (!Array.isArray(attachments)) {
     throw new InvalidQuestRequestError("attachments must be an array.");
   }
-  if (typeof model !== "string" || !model.trim()) {
+  if (model !== undefined && (typeof model !== "string" || !model.trim())) {
     throw new InvalidQuestRequestError("model must be a non-empty alias.");
   }
   const contextValidation = validateGameContext(game.trim(), mode.trim(), playerCount);
@@ -53,7 +53,8 @@ export function validateQuestRequest(input) {
     mode: mode.trim(),
     playerCount,
     question: question.trim(),
-    model: model.trim().toLowerCase(),
+    model: typeof model === "string" && model.trim() ? model.trim().toLowerCase() : undefined,
+    webSearch: webSearch !== false,
     ruleContext: contextValidation.context,
     attachments: attachments.map(({ name, type, size, dataUrl }) => ({ name, type, size, dataUrl })),
   };

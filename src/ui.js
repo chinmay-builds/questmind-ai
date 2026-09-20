@@ -6,6 +6,7 @@ import { fallbackResponse } from "./core/fallback.js";
 const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
 const modelSelect = document.querySelector("#model-select");
+const webSearchToggle = document.querySelector("#web-search-toggle");
 const modelNote = document.querySelector("#model-note");
 const playerOptions = document.querySelector("#player-options");
 const contextSummary = document.querySelector("#context-summary");
@@ -23,6 +24,13 @@ const routeLinks = document.querySelectorAll("[data-route]");
 const topbarRoute = document.querySelector("#topbar-route");
 const attachments = [];
 let messageCount = 1;
+
+async function loadModelConfig() {
+  const models = useServerProvider ? await fetch("/api/config").then((response) => response.ok ? response.json() : null).catch(() => null) : null;
+  const options = models?.models?.length ? models.models : ["openrouter/free"];
+  modelSelect.replaceChildren(...options.map((model) => new Option(model, model)));
+}
+
 const useServerProvider = !["localhost", "127.0.0.1"].includes(window.location.hostname);
 let modelRoster = new Map();
 
@@ -206,8 +214,9 @@ composer.addEventListener("submit", async (event) => {
       game: gameSelect.value,
       mode: modeSelect.value,
       playerCount: Number(selectedPlayers()),
-      question,
       model: modelSelect.value,
+      webSearch: webSearchToggle.checked,
+      question,
       attachments: await Promise.all(attachments.map(async ({ file }) => ({
         name: file.name,
         type: file.type,
