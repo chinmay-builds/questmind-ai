@@ -7,7 +7,7 @@ export const mockProvider = {
     const attachmentNote = request.attachments.length
       ? ` I’ve queued ${request.attachments.length} attached image${request.attachments.length === 1 ? "" : "s"} for a future vision pass.`
       : "";
-    const normalized = normalizeAssistantResponse(`[PLACEHOLDER] For ${request.game} · ${request.mode} · ${request.playerCount} ${request.playerCount === 1 ? "player" : "players"}: I’ve logged “${request.question}”. A rules-aware answer will appear here when a real provider is connected.${attachmentNote}`);
+    const normalized = normalizeAssistantResponse(`[LOCAL PLACEHOLDER] For ${request.game} · ${request.mode} · ${request.playerCount} ${request.playerCount === 1 ? "player" : "players"}: I’ve logged “${request.question}”. I cannot verify a rules answer without supplied rulebook context.${attachmentNote}\nEVIDENCE: ${request.ruleContext.evidence}.`);
     return {
       text: normalized.answer,
       evidence: normalized.evidence,

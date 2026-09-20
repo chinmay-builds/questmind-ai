@@ -19,4 +19,6 @@ export function createQuestMindCore({ provider, ...options } = {}) {
 export { validateQuestRequest } from "./contracts.js";
 export { createProvider, availableProviders } from "./providers/index.js";
 export { providerNameFromEnv, providerConfigFromEnv } from "./config.js";
+export { modelAliases, modelConfigFromEnv, resolveModelAlias } from "./config.js";
 export * from "./errors.js";
+export { fallbackResponse } from "./fallback.js";

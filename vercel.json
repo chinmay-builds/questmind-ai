@@ -8,11 +8,13 @@
     { "src": "favicon.png", "use": "@vercel/static" },
     { "src": "favicon.ico", "use": "@vercel/static" },
     { "src": "src/**", "use": "@vercel/static" },
-    { "src": "api/ask.js", "use": "@vercel/node" }
+    { "src": "api/ask.js", "use": "@vercel/node" },
+    { "src": "api/models.js", "use": "@vercel/node" }
   ],
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
-    { "source": "/api/ask", "destination": "/api/ask.js" }
+    { "source": "/api/ask", "destination": "/api/ask.js" },
+    { "source": "/api/models", "destination": "/api/models.js" }
   ],
   "redirects": [
     { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": false },

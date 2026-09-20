@@ -38,9 +38,26 @@ real game advice.
 
 The chat uses a provider-agnostic core in `src/core/`. Its request contract
 contains `game`, `mode`, `playerCount`, `question`, and optional image
-attachments (`name`, `type`, `size`). Providers implement `answer(request)` and
+attachments (`name`, `type`, `size`), plus a safe model alias such as
+`rules-sage`. Providers implement `answer(request)` and
 return a response with the selected context. The deterministic `mock` provider
 is the default for local/no-key development and does not call an AI service.
+
+The model picker uses four server-resolved aliases:
+
+| Alias | Label | Environment variable |
+| --- | --- | --- |
+| `rules-sage` | Rules Sage | `QUESTMIND_MODEL_RULES_SAGE` |
+| `strategy-coach` | Strategy Coach | `QUESTMIND_MODEL_STRATEGY_COACH` |
+| `tabletop-tactician` | Tabletop Tactician | `QUESTMIND_MODEL_TABLETOP_TACTICIAN` |
+| `lorekeeper` | Lorekeeper | `QUESTMIND_MODEL_LOREKEEPER` |
+
+Optional per-alias provider overrides are `QUESTMIND_PROVIDER_RULES_SAGE`,
+`QUESTMIND_PROVIDER_STRATEGY_COACH`, `QUESTMIND_PROVIDER_TABLETOP_TACTICIAN`,
+and `QUESTMIND_PROVIDER_LOREKEEPER`. The browser only sends the alias; the
+server resolves the real model name and never returns it or an API key.
+`GET /api/models` exposes only labels, provider names, and availability so the
+UI can mark missing aliases as unavailable.
 
 ### OpenRouter provider
 
@@ -89,9 +106,11 @@ OPENROUTER_APP_NAME=QuestMind
 ```
 
 `api/ask.js` accepts POST JSON only, caps bodies at 256 KB, returns normalized
-JSON errors, and does not cache responses. `vercel.json` explicitly builds
-that function with `@vercel/node` alongside the static root; redeploy is
-required for the route and env vars to take effect.
+JSON errors, includes a clearly marked non-factual retry fallback, and does
+not cache responses. A single retry is attempted only for transient HTTP
+statuses (429/5xx). `vercel.json` explicitly builds that function and
+`api/models.js` with `@vercel/node` alongside the static root; redeploy is
+required for the routes and env vars to take effect.
 
 ## Answer quality
 
@@ -102,3 +121,12 @@ never claims to browse or invents citations: when no reliable source is
 supplied, it says the answer cannot be verified and asks for the relevant
 rulebook page, rule text, or image. The UI renders both fields as text, never
 as HTML.
+
+## Rulebook coverage
+
+`src/rules.js` is the shared game/mode catalog. Every one of the 20 games and
+every listed mode has a context record and an evidence label, but the starter
+catalog intentionally contains no invented rule text. Until verified material
+is supplied, QuestMind says that the answer cannot be verified and asks for a
+rulebook page, rule text, or clearer image. Player bounds are validated from
+the same catalog, including solo and two-player mode adjustments.
