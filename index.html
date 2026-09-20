@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3ead8" />
+    <title>QuestMind — Your table-side co-pilot</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23365dcc'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-size='22' font-family='sans-serif' fill='white'%3EQ%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <!--
+      THESIS: A table-side command console, not a generic chatbot: set the game
+      context, then ask one clear question.
+      OWN-WORLD: Warm rulebook paper, ink-black type, cobalt tabs, tomato-red
+      stamps, and tactile 2px borders that feel pulled from a board-game box.
+      STORY: Players see their exact table context, attach a board state, and
+      get an honest local placeholder while the real companion is still cooking.
+      FIRST VIEWPORT: A narrow top rail leads into a two-column desk: context
+      controls on the left, conversation on the right, with the composer always
+      visible at the bottom of the chat column.
+      FORM: Operate surface / split-console staging, committed retro tabletop
+      direction, seed not applicable (brief-pinned retro chatbot UI).
+    -->
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="QuestMind home">
+          <span class="brand-mark">Q</span>
+          <span>QUESTMIND</span>
+        </a>
+        <div class="topbar-note"><span class="status-dot"></span> LOCAL MODE <span class="slash">/</span> NO AI CONNECTED</div>
+      </header>
+
+      <section class="intro">
+        <div>
+          <p class="stamp">TABLE-SIDE COMPANION</p>
+          <h1>Ask better.<br /><em>Play sharper.</em></h1>
+        </div>
+        <p class="intro-copy">Set the table context, point QuestMind at a rule or board state, and get a clear next step. No bluffing. No hidden magic.</p>
+      </section>
+
+      <div class="workspace">
+        <aside class="context-panel" aria-labelledby="context-heading">
+          <div class="panel-heading">
+            <span class="panel-number">01</span>
+            <h2 id="context-heading">Set the table</h2>
+          </div>
+
+          <label class="field-label" for="game-select">Game</label>
+          <select id="game-select" class="select-control"></select>
+
+          <label class="field-label" for="mode-select">Mode</label>
+          <select id="mode-select" class="select-control"></select>
+
+          <fieldset class="player-field">
+            <legend class="field-label">Players</legend>
+            <div class="player-options" id="player-options" role="radiogroup" aria-label="Number of players"></div>
+          </fieldset>
+
+          <div class="model-lockup">
+            <div class="field-label">Model</div>
+            <div class="model-control" aria-disabled="true">
+              <span class="model-spark">✦</span>
+              <span class="model-name">QuestMind Core</span>
+              <span class="coming-soon">COMING SOON!</span>
+            </div>
+            <p class="helper-text">For now, responses are deterministic placeholders.</p>
+          </div>
+
+          <div class="context-readout" aria-live="polite">
+            <span>YOUR SETUP</span>
+            <strong id="context-summary">Catan · Standard · 4 players</strong>
+          </div>
+        </aside>
+
+        <section class="chat-panel" aria-labelledby="chat-heading">
+          <div class="chat-header">
+            <div>
+              <span class="panel-number">02</span>
+              <h2 id="chat-heading">Ask QuestMind</h2>
+            </div>
+            <span class="chat-count" id="chat-count">01 MESSAGE</span>
+          </div>
+
+          <div class="message-stream" id="message-stream" aria-live="polite">
+            <article class="message message-assistant">
+              <div class="message-meta"><span class="avatar">Q</span><span>QUESTMIND</span><time>JUST NOW</time></div>
+              <p>Ready when you are. Ask about a rule, a turn, or the shape of your next move.</p>
+            </article>
+          </div>
+
+          <div class="composer-wrap">
+            <div class="attachment-strip" id="attachment-strip" aria-live="polite"></div>
+            <form class="composer" id="composer">
+              <input id="image-input" type="file" accept="image/*" multiple hidden />
+              <button class="icon-button" type="button" id="attach-button" aria-label="Attach an image" title="Attach an image">+</button>
+              <label class="sr-only" for="question-input">Your question</label>
+              <textarea id="question-input" rows="1" placeholder="Ask about a rule or your next move…" required></textarea>
+              <button class="send-button" type="submit"><span>SEND</span><span aria-hidden="true">↗</span></button>
+            </form>
+            <p class="composer-note">TIP: Include the exact card, phase, or rulebook line you’re looking at.</p>
+          </div>
+        </section>
+      </div>
+
+      <footer class="footer-note"><span>QM / 001</span><span>BUILT FOR THE TABLE</span><span>© QUESTMIND</span></footer>
+    </main>
+    <script type="module" src="./src/ui.js"></script>
+  </body>
+</html>
