@@ -126,6 +126,7 @@ textarea { flex: 1; resize: none; min-width: 0; border: 2px solid var(--ink); pa
 textarea:focus { outline: 3px solid var(--blue); }
 .send-button { display: inline-flex; gap: 14px; align-items: center; padding: 0 17px; background: var(--blue); color: var(--white); font: 11px "DM Mono", monospace; letter-spacing: .08em; }
 .send-button:hover { background: var(--blue-dark); }
+.send-button:disabled { cursor: wait; opacity: .65; }
 .composer-note { color: var(--muted); font: 9px "DM Mono", monospace; margin: 9px 0 0 53px; }
 .footer-note { display: flex; justify-content: space-between; color: var(--muted); font-size: 9px; padding-top: 22px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

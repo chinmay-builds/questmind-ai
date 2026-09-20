@@ -75,6 +75,20 @@ failures are normalized as typed `ProviderRequestError`s.
 `src/core/api.js` is a framework-neutral boundary that can be called from a
 future server-side Vercel function without turning the static deployment into a
 legacy serverless app. The current Vercel deployment remains static, so the
-browser continues to use `mock`; a future API route should call `askQuestMind`
-server-side and keep these env vars in Vercel Project Settings, never in
-client-exposed variables.
+browser uses the explicit `/api/ask` Vercel function in production and keeps
+the local mock fallback only on localhost. Configure these Vercel Project
+Settings environment variables, redeploy after saving them, and never prefix
+the secret with `NEXT_PUBLIC_` or expose it to client code:
+
+```text
+QUESTMIND_PROVIDER=openrouter
+OPENROUTER_API_KEY=...
+OPENROUTER_MODEL=openrouter/free
+OPENROUTER_SITE_URL=https://your-vercel-domain
+OPENROUTER_APP_NAME=QuestMind
+```
+
+`api/ask.js` accepts POST JSON only, caps bodies at 256 KB, returns normalized
+JSON errors, and does not cache responses. `vercel.json` explicitly builds
+that function with `@vercel/node` alongside the static root; redeploy is
+required for the route and env vars to take effect.
