@@ -33,3 +33,26 @@ printf "How does scoring work?" | npm start
 
 Every current answer is marked `[PLACEHOLDER]` so it cannot be mistaken for
 real game advice.
+
+## QuestMind Core
+
+The chat uses a provider-agnostic core in `src/core/`. Its request contract
+contains `game`, `mode`, `playerCount`, `question`, and optional image
+attachments (`name`, `type`, `size`). Providers implement `answer(request)` and
+return a response with the selected context. The only provider today is the
+explicit deterministic `mock` provider; it is useful for local development and
+does not call an AI service.
+
+Provider selection is intentionally strict:
+
+```bash
+QUESTMIND_PROVIDER=mock
+```
+
+There is no silent fallback. Missing configuration raises
+`PROVIDER_NOT_CONFIGURED`, and unknown names raise `UNSUPPORTED_PROVIDER`.
+`src/core/api.js` is a framework-neutral boundary that can be called from a
+future Vercel function without turning the static deployment into a legacy
+serverless app. Adding a hosted provider should implement the same provider
+contract, read its own documented secret, and leave the request/response
+contract unchanged.

@@ -1,5 +1,5 @@
 import { games } from "./games.js";
-import { createPlaceholderResponse } from "./response.js";
+import { askQuestMind } from "./core/api.js";
 
 const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
@@ -115,7 +115,13 @@ composer.addEventListener("submit", (event) => {
   const imageUrls = attachments.map(({ url }) => url);
   addMessage("user", question, imageUrls);
   const game = gameSelect.value;
-  const response = createPlaceholderResponse({ game, mode: modeSelect.value, players: selectedPlayers(), question, attachments: attachments.length });
+  const response = askQuestMind({
+    game,
+    mode: modeSelect.value,
+    playerCount: Number(selectedPlayers()),
+    question,
+    attachments: attachments.map(({ file }) => ({ name: file.name, type: file.type, size: file.size })),
+  }, { provider: "mock" }).text;
   questionInput.value = "";
   attachments.splice(0).forEach(({ url }) => URL.revokeObjectURL(url));
   renderAttachments();

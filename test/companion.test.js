@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { answerQuestion } from "../src/companion.js";
-import { createPlaceholderResponse } from "../src/response.js";
+import { askQuestMind } from "../src/core/api.js";
+import { createProvider } from "../src/core/providers/index.js";
+import { providerNameFromEnv } from "../src/core/config.js";
+import { InvalidQuestRequestError, ProviderNotConfiguredError, UnsupportedProviderError } from "../src/core/errors.js";
 
 test("returns an explicitly marked placeholder answer", () => {
   const response = answerQuestion("Can I draw two cards?");
@@ -26,13 +29,26 @@ test("rejects an empty question", () => {
 
 test("includes the selected context and attachment count in the UI response", () => {
   assert.match(
-    createPlaceholderResponse({
+    askQuestMind({
       game: "Scythe",
       mode: "Automa",
-      players: "2",
+      playerCount: 2,
       question: "What should I do next?",
-      attachments: 2,
-    }),
+      attachments: [{ name: "board.png", type: "image/png" }, { name: "card.jpg", type: "image/jpeg" }],
+    }, { provider: "mock" }).text,
     /Scythe · Automa · 2 players[\s\S]*2 attached images/,
   );
+});
+
+test("rejects malformed core requests", () => {
+  assert.throws(() => askQuestMind({ game: "Catan", mode: "Standard", playerCount: 0, question: "Help" }, { provider: "mock" }), InvalidQuestRequestError);
+  assert.throws(() => askQuestMind({ game: "Catan", mode: "Standard", playerCount: 4, question: "" }, { provider: "mock" }), InvalidQuestRequestError);
+});
+
+test("requires an explicit supported provider", () => {
+  assert.throws(() => createProvider(), ProviderNotConfiguredError);
+  assert.throws(() => createProvider("hosted-ai"), UnsupportedProviderError);
+  assert.equal(createProvider("mock").name, "mock");
+  assert.equal(providerNameFromEnv({ QUESTMIND_PROVIDER: "mock" }), "mock");
+  assert.throws(() => providerNameFromEnv({}), ProviderNotConfiguredError);
 });
