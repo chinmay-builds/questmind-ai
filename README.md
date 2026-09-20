@@ -92,3 +92,13 @@ OPENROUTER_APP_NAME=QuestMind
 JSON errors, and does not cache responses. `vercel.json` explicitly builds
 that function with `@vercel/node` alongside the static root; redeploy is
 required for the route and env vars to take effect.
+
+## Answer quality
+
+The OpenRouter system policy requires a concise answer to only the asked
+question, using the selected game context and supplied images/rule text first.
+Responses are normalized into an answer plus an `EVIDENCE` line. QuestMind
+never claims to browse or invents citations: when no reliable source is
+supplied, it says the answer cannot be verified and asks for the relevant
+rulebook page, rule text, or image. The UI renders both fields as text, never
+as HTML.

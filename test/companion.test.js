@@ -7,6 +7,7 @@ import { providerNameFromEnv } from "../src/core/config.js";
 import { createOpenRouterProvider } from "../src/core/providers/openrouter.js";
 import { InvalidQuestRequestError, ProviderConfigurationError, ProviderRequestError, UnsupportedProviderError } from "../src/core/errors.js";
 import askHandler from "../api/ask.js";
+import { normalizeAssistantResponse } from "../src/core/contracts.js";
 
 test("returns an explicitly marked placeholder answer", () => {
   const response = answerQuestion("Can I draw two cards?");
@@ -66,7 +67,7 @@ test("normalizes an OpenRouter response and sends context without exposing brows
     appName: "QuestMind",
     fetchImpl: async (url, options) => {
       request = { url, options };
-      return new Response(JSON.stringify({ choices: [{ message: { content: " Build the market before ending the round." } }] }), { status: 200 });
+      return new Response(JSON.stringify({ choices: [{ message: { content: "ANSWER: Build the market before ending the round.\nEVIDENCE: Supplied board image." } }] }), { status: 200 });
     },
   });
   const result = await provider.answer({
@@ -77,10 +78,20 @@ test("normalizes an OpenRouter response and sends context without exposing brows
     attachments: [{ name: "board.png", type: "image/png" }],
   });
   assert.equal(result.text, "Build the market before ending the round.");
+  assert.equal(result.evidence, "Supplied board image.");
   assert.equal(result.provider, "openrouter");
   assert.equal(request.options.headers.Authorization, "Bearer secret");
   assert.equal(request.options.headers["HTTP-Referer"], "https://questmind.example");
   assert.equal(JSON.parse(request.options.body).model, "openrouter/free");
+});
+
+test("normalizes grounded answer format without allowing HTML or invented sources", () => {
+  assert.deepEqual(normalizeAssistantResponse("ANSWER: Check the rule.\nEVIDENCE: Rulebook, page 4."), {
+    answer: "Check the rule.",
+    evidence: "Rulebook, page 4.",
+  });
+  assert.equal(normalizeAssistantResponse("<b>Check the rule.</b>").answer, "Check the rule.");
+  assert.match(normalizeAssistantResponse("I cannot verify this from the supplied context.").evidence, /Not provided/);
 });
 
 test("normalizes OpenRouter HTTP and payload failures", async () => {
