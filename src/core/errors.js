@@ -22,8 +22,15 @@ export class ProviderNotConfiguredError extends QuestMindError {
 
 export class UnsupportedProviderError extends QuestMindError {
   constructor(provider) {
-    super(`Unsupported QuestMind provider "${provider}". Available providers: mock.`, "UNSUPPORTED_PROVIDER");
+    super(`Unsupported QuestMind provider "${provider}". Available providers: mock, openrouter.`, "UNSUPPORTED_PROVIDER");
     this.name = "UnsupportedProviderError";
+  }
+}
+
+export class ModelConfigurationError extends QuestMindError {
+  constructor(message) {
+    super(message, "MODEL_CONFIGURATION_ERROR");
+    this.name = "ModelConfigurationError";
   }
 }
 

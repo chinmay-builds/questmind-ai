@@ -1,5 +1,6 @@
 import { askQuestMind } from "../src/core/api.js";
 import { QuestMindError } from "../src/core/errors.js";
+import { fallbackResponse } from "../src/core/fallback.js";
 
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -28,8 +29,9 @@ export default async function handler(request, response) {
     sendJson(response, 413, { error: { code: "REQUEST_TOO_LARGE", message: "Request must be 256 KB or smaller." } });
     return;
   }
+  let body;
   try {
-    const body = request.body ?? await readBody(request);
+    body = request.body ?? await readBody(request);
     if (!body || typeof body !== "object") {
       sendJson(response, 400, { error: { code: "INVALID_REQUEST", message: "A JSON request body is required." } });
       return;
@@ -39,7 +41,10 @@ export default async function handler(request, response) {
   } catch (error) {
     if (error instanceof QuestMindError) {
       const status = error.code === "PROVIDER_CONFIGURATION_ERROR" ? 503 : error.code === "INVALID_REQUEST" ? 400 : 502;
-      sendJson(response, status, { error: { code: error.code, message: error.message } });
+      sendJson(response, status, {
+        error: { code: error.code, message: error.message },
+        fallback: body && typeof body === "object" ? fallbackResponse(body, "The server configuration needs attention.") : undefined,
+      });
       return;
     }
     console.error("QuestMind API error", error);
