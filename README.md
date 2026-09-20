@@ -39,9 +39,26 @@ real game advice.
 The chat uses a provider-agnostic core in `src/core/`. Its request contract
 contains `game`, `mode`, `playerCount`, `question`, and optional image
 attachments (`name`, `type`, `size`). Providers implement `answer(request)` and
-return a response with the selected context. The only provider today is the
-explicit deterministic `mock` provider; it is useful for local development and
-does not call an AI service.
+return a response with the selected context. The deterministic `mock` provider
+is the default for local/no-key development and does not call an AI service.
+
+### OpenRouter provider
+
+The first real provider is server-side OpenRouter. It is not imported by the
+browser UI and its key is never bundled into static assets. To use it from a
+server-side caller:
+
+```bash
+QUESTMIND_PROVIDER=openrouter
+OPENROUTER_API_KEY=your-key
+OPENROUTER_MODEL=openrouter/free
+```
+
+Optional attribution headers are configured with `OPENROUTER_SITE_URL` and
+`OPENROUTER_APP_NAME`. Requests time out after 20 seconds by default; tune that
+with `OPENROUTER_TIMEOUT_MS`. `openrouter/free` is OpenRouter's free-model
+router, so its availability and limits can change. Set `OPENROUTER_MODEL` to a
+specific model available to your account when you need predictable behavior.
 
 Provider selection is intentionally strict:
 
@@ -49,10 +66,15 @@ Provider selection is intentionally strict:
 QUESTMIND_PROVIDER=mock
 ```
 
-There is no silent fallback. Missing configuration raises
-`PROVIDER_NOT_CONFIGURED`, and unknown names raise `UNSUPPORTED_PROVIDER`.
+Provider selection is explicit when `QUESTMIND_PROVIDER` is set. With no
+provider and no API key, the resolver intentionally selects `mock`; with an
+OpenRouter key present it selects `openrouter`. Selecting `openrouter` without
+`OPENROUTER_API_KEY` raises `PROVIDER_CONFIGURATION_ERROR`, and unknown names
+raise `UNSUPPORTED_PROVIDER`. Provider HTTP, JSON, invalid-payload, and timeout
+failures are normalized as typed `ProviderRequestError`s.
 `src/core/api.js` is a framework-neutral boundary that can be called from a
-future Vercel function without turning the static deployment into a legacy
-serverless app. Adding a hosted provider should implement the same provider
-contract, read its own documented secret, and leave the request/response
-contract unchanged.
+future server-side Vercel function without turning the static deployment into a
+legacy serverless app. The current Vercel deployment remains static, so the
+browser continues to use `mock`; a future API route should call `askQuestMind`
+server-side and keep these env vars in Vercel Project Settings, never in
+client-exposed variables.

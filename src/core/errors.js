@@ -26,3 +26,17 @@ export class UnsupportedProviderError extends QuestMindError {
     this.name = "UnsupportedProviderError";
   }
 }
+
+export class ProviderConfigurationError extends QuestMindError {
+  constructor(message) {
+    super(message, "PROVIDER_CONFIGURATION_ERROR");
+    this.name = "ProviderConfigurationError";
+  }
+}
+
+export class ProviderRequestError extends QuestMindError {
+  constructor(message, code = "PROVIDER_REQUEST_FAILED") {
+    super(message, code);
+    this.name = "ProviderRequestError";
+  }
+}

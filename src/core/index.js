@@ -3,11 +3,11 @@ import { createProvider } from "./providers/index.js";
 
 /**
  * Create a small provider-agnostic QuestMind core.
- * The provider is intentionally explicit: callers must choose "mock" today
- * and can add a hosted provider without changing the request contract.
+ * The provider is explicit when supplied; without one, local/no-key usage
+ * resolves to mock and a configured OpenRouter key resolves to openrouter.
  */
-export function createQuestMindCore({ provider } = {}) {
-  const selectedProvider = createProvider(provider);
+export function createQuestMindCore({ provider, ...options } = {}) {
+  const selectedProvider = createProvider(provider, options);
   return {
     provider: selectedProvider.name,
     answer(request) {
@@ -18,5 +18,5 @@ export function createQuestMindCore({ provider } = {}) {
 
 export { validateQuestRequest } from "./contracts.js";
 export { createProvider, availableProviders } from "./providers/index.js";
-export { providerNameFromEnv } from "./config.js";
+export { providerNameFromEnv, providerConfigFromEnv } from "./config.js";
 export * from "./errors.js";
