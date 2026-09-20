@@ -22,17 +22,17 @@ test("rejects an empty question", () => {
     name: "TypeError",
     message: "A non-empty game or rules question is required.",
   });
+});
 
-  test("includes the selected context and attachment count in the UI response", () => {
-    assert.match(
-      createPlaceholderResponse({
-        game: "Scythe",
-        mode: "Automa",
-        players: "2",
-        question: "What should I do next?",
-        attachments: 2,
-      }),
-      /Scythe · Automa · 2 players[\s\S]*2 attached images/,
-    );
-  });
+test("includes the selected context and attachment count in the UI response", () => {
+  assert.match(
+    createPlaceholderResponse({
+      game: "Scythe",
+      mode: "Automa",
+      players: "2",
+      question: "What should I do next?",
+      attachments: 2,
+    }),
+    /Scythe · Automa · 2 players[\s\S]*2 attached images/,
+  );
 });

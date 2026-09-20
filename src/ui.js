@@ -12,8 +12,31 @@ const chatCount = document.querySelector("#chat-count");
 const imageInput = document.querySelector("#image-input");
 const attachButton = document.querySelector("#attach-button");
 const attachmentStrip = document.querySelector("#attachment-strip");
+const landingView = document.querySelector("#landing-view");
+const chatView = document.querySelector("#chat-view");
+const routeLinks = document.querySelectorAll("[data-route]");
+const topbarRoute = document.querySelector("#topbar-route");
 const attachments = [];
 let messageCount = 1;
+
+function showRoute() {
+  const isChat = window.location.hash === "#chat";
+  landingView.hidden = isChat;
+  chatView.hidden = !isChat;
+  document.body.classList.toggle("is-chat", isChat);
+  document.title = isChat ? "QuestMind — Table-side companion" : "QuestMind — Your table-side co-pilot";
+  topbarRoute.href = isChat ? "/" : "#chat";
+  topbarRoute.dataset.route = isChat ? "home" : "chat";
+  topbarRoute.innerHTML = isChat ? "BACK TO HOME <span>↩</span>" : "ENTER QUESTMIND <span>↗</span>";
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+routeLinks.forEach((link) => link.addEventListener("click", () => {
+  if (link.dataset.route === "chat") history.pushState(null, "", "#chat");
+  showRoute();
+}));
+window.addEventListener("hashchange", showRoute);
+window.addEventListener("popstate", showRoute);
 
 for (const game of games) {
   gameSelect.add(new Option(game.name, game.name));
@@ -98,3 +121,4 @@ composer.addEventListener("submit", (event) => {
 });
 
 updateContext();
+showRoute();

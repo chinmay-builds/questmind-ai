@@ -28,17 +28,50 @@
           <span class="brand-mark">Q</span>
           <span>QUESTMIND</span>
         </a>
-        <div class="topbar-note"><span class="status-dot"></span> LOCAL MODE <span class="slash">/</span> NO AI CONNECTED</div>
+        <div class="topbar-actions">
+          <div class="topbar-note"><span class="status-dot"></span> LOCAL MODE <span class="slash">/</span> NO AI CONNECTED</div>
+          <a class="topbar-cta" id="topbar-route" href="#chat" data-route="chat">ENTER QUESTMIND <span>↗</span></a>
+        </div>
       </header>
 
-      <section class="intro">
-        <div>
-          <p class="stamp">TABLE-SIDE COMPANION</p>
-          <h1>Ask better.<br /><em>Play sharper.</em></h1>
+      <section class="landing-view route-view" id="landing-view" aria-labelledby="landing-heading">
+        <div class="landing-hero">
+          <div class="hero-copy">
+            <p class="stamp">YOUR TABLE-SIDE CO-PILOT</p>
+            <h1 id="landing-heading">Rules out.<br /><em>Play on.</em></h1>
+            <p class="hero-lede">QuestMind turns “wait, how does this work?” into a confident next move. Set your game, ask plainly, and keep the table moving.</p>
+            <a class="hero-cta" href="#chat" data-route="chat">ENTER QUESTMIND <span>↗</span></a>
+            <p class="hero-note">A small, honest first step. AI model coming soon.</p>
+          </div>
+          <div class="hero-art" aria-label="Illustration of the QuestMind table-side console">
+            <div class="art-sticker">QM<br /><small>001</small></div>
+            <div class="art-card art-card-back">ASK<br /><strong>BETTER</strong></div>
+            <div class="art-card art-card-front"><span>TABLE NOTE</span><strong>PLAY<br /><em>SHARPER.</em></strong><small>GAME / MODE / PLAYERS</small></div>
+            <div class="art-doodle">✦</div>
+          </div>
         </div>
-        <p class="intro-copy">Set the table context, point QuestMind at a rule or board state, and get a clear next step. No bluffing. No hidden magic.</p>
+        <div class="landing-intro">
+          <p class="section-kicker">ONE COMPANION. TWO JOBS.</p>
+          <h2>Less rulebook rummaging.<br /><em>More good turns.</em></h2>
+          <p>QuestMind is being built for the moment a great game hits a speed bump. Start with the <strong>Explainer</strong> for rules, cards, and edge cases. Then graduate to <strong>Player</strong> for plans, trade-offs, and “what would you do?” table talk.</p>
+        </div>
+        <div class="vision-grid">
+          <article class="vision-block"><span class="vision-index">A / EXPLAINER</span><h3>Make the rule click.</h3><p>Ask about a phase, card, or board state in ordinary language. Add a photo when pointing is faster than typing.</p><a href="#chat" data-route="chat">TRY THE SETUP <span>→</span></a></article>
+          <article class="vision-block vision-block-accent"><span class="vision-index">B / PLAYER</span><h3>See the next move.</h3><p>Once the context is clear, QuestMind can become the quiet co-pilot that helps you weigh a turn without taking over the table.</p><span class="vision-coming">IN THE WORKS / SOON</span></article>
+        </div>
+        <div class="landing-strip"><span>20 GAMES READY TO SET UP</span><span>LOCAL-FIRST BY DESIGN</span><span>NO BLUFFING / NO HIDDEN MAGIC</span></div>
+        <div class="games-roadmap">
+          <div><p class="section-kicker">ON THE TABLE</p><h2>Start with the games<br /><em>you already love.</em></h2></div>
+          <div class="game-tags"><span>SCYTHE</span><span>CATAN</span><span>WINGSPAN</span><span>ROOT</span><span>GLOOMHAVEN</span><span>SPIRIT ISLAND</span><span>ARK NOVA</span><span>+ 13 MORE</span></div>
+        </div>
+        <div class="landing-final"><p>Ready to make your next rules question<br /><em>the easy part?</em></p><a class="hero-cta" href="#chat" data-route="chat">SET THE TABLE <span>↗</span></a></div>
       </section>
 
+      <section class="chat-view route-view" id="chat-view" aria-labelledby="chat-heading" hidden>
+      <div class="chat-intro">
+        <div><p class="stamp">TABLE-SIDE COMPANION</p><h1>Ask better.<br /><em>Play sharper.</em></h1></div>
+        <p class="intro-copy">Set the table context, point QuestMind at a rule or board state, and get a clear next step. No bluffing. No hidden magic.</p>
+      </div>
       <div class="workspace">
         <aside class="context-panel" aria-labelledby="context-heading">
           <div class="panel-heading">
@@ -102,7 +135,7 @@
           </div>
         </section>
       </div>
-
+      </section>
       <footer class="footer-note"><span>QM / 001</span><span>BUILT FOR THE TABLE</span><span>© QUESTMIND</span></footer>
     </main>
     <script type="module" src="./src/ui.js"></script>
