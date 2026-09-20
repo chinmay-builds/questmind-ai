@@ -17,6 +17,7 @@ function modelEnvValue(alias, env) {
     env?.[`QUESTMIND_MODEL_${suffix}`],
     env?.[`QUESTMIND_${suffix}_MODEL`],
     env?.[`OPENROUTER_MODEL_${suffix}`],
+    env?.[`QUESTMIND_${suffix}`],
   ].find((value) => typeof value === "string" && value.trim())?.trim();
 }
 

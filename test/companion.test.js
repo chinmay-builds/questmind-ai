@@ -7,6 +7,7 @@ import { providerNameFromEnv } from "../src/core/config.js";
 import { modelConfigFromEnv, resolveModelAlias } from "../src/core/config.js";
 import { getPlayerOptions } from "../src/games.js";
 import { getRuleContext } from "../src/rules.js";
+import { searchRuleSources } from "../src/core/search.js";
 import { createOpenRouterProvider } from "../src/core/providers/openrouter.js";
 import { InvalidQuestRequestError, ProviderConfigurationError, ProviderRequestError, UnsupportedProviderError } from "../src/core/errors.js";
 import askHandler from "../api/ask.js";
@@ -253,6 +254,30 @@ test("provider failures produce a safe retry fallback", async () => {
   assert.equal(response.statusCode, 503);
   assert.equal(payload.fallback.provider, "fallback");
   assert.match(payload.fallback.text, /couldn't verify|retry/i);
+});
+
+test("searches only through the server-side source adapter and normalizes results", async () => {
+  let requestedUrl;
+  const result = await searchRuleSources("Scythe Automa official rules", {
+    apiKey: "search-secret",
+    fetchImpl: async (url, options) => {
+      requestedUrl = String(url);
+      assert.equal(options.headers["X-Subscription-Token"], "search-secret");
+      return new Response(JSON.stringify({
+        web: { results: [
+          { title: "Official rules", url: "https://example.com/rules", description: "Verified excerpt." },
+          { title: "Ignored", url: "javascript:alert(1)", description: "Unsafe." },
+        ] },
+      }), { status: 200 });
+    },
+  });
+  assert.match(requestedUrl, /q=Scythe\+Automa\+official\+rules/);
+  assert.equal(result.results.length, 1);
+  assert.equal(result.results[0].url, "https://example.com/rules");
+});
+
+test("does not claim a web search when search is unconfigured", async () => {
+  assert.deepEqual(await searchRuleSources("Catan rules", { env: {} }), { attempted: false, results: [] });
 });
 
 function createTestResponse() {

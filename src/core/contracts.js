@@ -9,7 +9,8 @@ import { validateGameContext } from "../rules.js";
  *   playerCount: number,
  *   question: string,
  *   attachments?: ImageAttachment[],
- *   model?: string
+ *   model?: string,
+ *   searchContext?: { attempted: boolean, results: Array<{ title: string, url: string, snippet: string }> }
  * }} QuestRequest
  * @typedef {{ text: string, evidence: string, provider: string, context: { game: string, mode: string, playerCount: number, attachmentCount: number } }} QuestResponse
  */
@@ -19,7 +20,7 @@ export function validateQuestRequest(input) {
     throw new InvalidQuestRequestError("A request object is required.");
   }
 
-  const { game, mode, playerCount, question, attachments = [], model = "rules-sage" } = input;
+  const { game, mode, playerCount, question, attachments = [], model = "rules-sage", searchContext = { attempted: false, results: [] } } = input;
   if (typeof game !== "string" || !game.trim()) {
     throw new InvalidQuestRequestError("game must be a non-empty string.");
   }
@@ -38,6 +39,9 @@ export function validateQuestRequest(input) {
   if (typeof model !== "string" || !model.trim()) {
     throw new InvalidQuestRequestError("model must be a non-empty alias.");
   }
+  if (!searchContext || typeof searchContext !== "object" || !Array.isArray(searchContext.results)) {
+    throw new InvalidQuestRequestError("searchContext must contain a results array.");
+  }
   const contextValidation = validateGameContext(game.trim(), mode.trim(), playerCount);
   if (!contextValidation.ok) throw new InvalidQuestRequestError(contextValidation.message);
   for (const attachment of attachments) {
@@ -55,6 +59,10 @@ export function validateQuestRequest(input) {
     question: question.trim(),
     model: model.trim().toLowerCase(),
     ruleContext: contextValidation.context,
+    searchContext: {
+      attempted: Boolean(searchContext.attempted),
+      results: searchContext.results.slice(0, 5).filter((result) => result && typeof result.title === "string" && typeof result.url === "string"),
+    },
     attachments: attachments.map(({ name, type, size, dataUrl }) => ({ name, type, size, dataUrl })),
   };
 }

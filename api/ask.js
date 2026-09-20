@@ -1,6 +1,7 @@
 import { askQuestMind } from "../src/core/api.js";
 import { QuestMindError } from "../src/core/errors.js";
 import { fallbackResponse } from "../src/core/fallback.js";
+import { searchRuleSources } from "../src/core/search.js";
 
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -36,7 +37,9 @@ export default async function handler(request, response) {
       sendJson(response, 400, { error: { code: "INVALID_REQUEST", message: "A JSON request body is required." } });
       return;
     }
-    const result = await askQuestMind(body, { provider: process.env.QUESTMIND_PROVIDER ?? "openrouter", env: process.env });
+    const searchQuery = `${body.game} ${body.mode} official rules ${body.question}`;
+    const searchContext = await searchRuleSources(searchQuery, { env: process.env });
+    const result = await askQuestMind({ ...body, searchContext }, { provider: process.env.QUESTMIND_PROVIDER ?? "openrouter", env: process.env });
     sendJson(response, 200, result);
   } catch (error) {
     if (error instanceof QuestMindError) {

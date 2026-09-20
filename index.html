@@ -98,8 +98,13 @@
 
           <div class="model-lockup">
             <label class="field-label" for="model-select">Companion</label>
-            <select id="model-select" class="select-control model-select"></select>
-            <p class="helper-text" id="model-note">Checking the server roster…</p>
+            <select id="model-select" class="select-control model-select" aria-describedby="model-note">
+              <option value="rules-sage">Rules Sage</option>
+              <option value="strategy-coach" disabled>Strategy Coach — UNAVAILABLE</option>
+              <option value="tabletop-tactician" disabled>Tabletop Tactician — UNAVAILABLE</option>
+              <option value="lorekeeper" disabled>Lorekeeper — UNAVAILABLE</option>
+            </select>
+            <p class="helper-text" id="model-note">Loading server availability…</p>
           </div>
 
           <div class="context-readout" aria-live="polite">

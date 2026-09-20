@@ -8,6 +8,7 @@ const catalog = new Map(games.flatMap((game) => game.modes.map((mode) => [
     summary: "No verified rule excerpt is loaded for this game and mode yet. Upload or paste the relevant rulebook page before relying on an answer.",
     evidence: "Rulebook context not provided",
     source: null,
+    sourceQuery: `"${game.name}" "${mode}" official rules rulebook`,
   },
 ])));
 
@@ -30,6 +31,7 @@ export function getRuleContext(gameName, mode) {
     summary: "No verified rule context is available for this selection.",
     evidence: "Rulebook context not provided",
     source: null,
+    sourceQuery: `"${gameName}" "${mode}" official rules rulebook`,
   };
 }
 

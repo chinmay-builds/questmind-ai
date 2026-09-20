@@ -59,6 +59,12 @@ server resolves the real model name and never returns it or an API key.
 `GET /api/models` exposes only labels, provider names, and availability so the
 UI can mark missing aliases as unavailable.
 
+When `BRAVE_SEARCH_API_KEY` is configured on Vercel, `/api/ask` performs a
+server-side Brave Web Search for the selected game, mode, and question. Only
+the returned title, URL, and snippet are sent to the model; the key never
+reaches the browser. Without that key, QuestMind explicitly tells the model
+that real-time search was not run and will not invent a source.
+
 ### OpenRouter provider
 
 The first real provider is server-side OpenRouter. It is not imported by the
