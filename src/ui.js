@@ -3,6 +3,8 @@ import { askQuestMind } from "./core/api.js";
 
 const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
+const modelSelect = document.querySelector("#model-select");
+const webSearchToggle = document.querySelector("#web-search-toggle");
 const playerOptions = document.querySelector("#player-options");
 const contextSummary = document.querySelector("#context-summary");
 const composer = document.querySelector("#composer");
@@ -19,6 +21,13 @@ const routeLinks = document.querySelectorAll("[data-route]");
 const topbarRoute = document.querySelector("#topbar-route");
 const attachments = [];
 let messageCount = 1;
+
+async function loadModelConfig() {
+  const models = useServerProvider ? await fetch("/api/config").then((response) => response.ok ? response.json() : null).catch(() => null) : null;
+  const options = models?.models?.length ? models.models : ["openrouter/free"];
+  modelSelect.replaceChildren(...options.map((model) => new Option(model, model)));
+}
+
 const useServerProvider = !["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 function showRoute() {
@@ -154,6 +163,8 @@ composer.addEventListener("submit", async (event) => {
       game: gameSelect.value,
       mode: modeSelect.value,
       playerCount: Number(selectedPlayers()),
+      model: modelSelect.value,
+      webSearch: webSearchToggle.checked,
       question,
       attachments: await Promise.all(attachments.map(async ({ file }) => ({
         name: file.name,
@@ -177,4 +188,5 @@ composer.addEventListener("submit", async (event) => {
 });
 
 updateContext();
+loadModelConfig();
 showRoute();

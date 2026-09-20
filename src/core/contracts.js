@@ -17,7 +17,7 @@ export function validateQuestRequest(input) {
     throw new InvalidQuestRequestError("A request object is required.");
   }
 
-  const { game, mode, playerCount, question, attachments = [] } = input;
+  const { game, mode, playerCount, question, model, webSearch, attachments = [] } = input;
   if (typeof game !== "string" || !game.trim()) {
     throw new InvalidQuestRequestError("game must be a non-empty string.");
   }
@@ -46,6 +46,8 @@ export function validateQuestRequest(input) {
     mode: mode.trim(),
     playerCount,
     question: question.trim(),
+    model: typeof model === "string" && model.trim() ? model.trim() : undefined,
+    webSearch: webSearch !== false,
     attachments: attachments.map(({ name, type, size, dataUrl }) => ({ name, type, size, dataUrl })),
   };
 }
