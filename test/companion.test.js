@@ -4,7 +4,8 @@ import { answerQuestion } from "../src/companion.js";
 import { askQuestMind } from "../src/core/api.js";
 import { createProvider } from "../src/core/providers/index.js";
 import { providerNameFromEnv } from "../src/core/config.js";
-import { InvalidQuestRequestError, ProviderNotConfiguredError, UnsupportedProviderError } from "../src/core/errors.js";
+import { createOpenRouterProvider } from "../src/core/providers/openrouter.js";
+import { InvalidQuestRequestError, ProviderConfigurationError, ProviderRequestError, UnsupportedProviderError } from "../src/core/errors.js";
 
 test("returns an explicitly marked placeholder answer", () => {
   const response = answerQuestion("Can I draw two cards?");
@@ -46,9 +47,70 @@ test("rejects malformed core requests", () => {
 });
 
 test("requires an explicit supported provider", () => {
-  assert.throws(() => createProvider(), ProviderNotConfiguredError);
   assert.throws(() => createProvider("hosted-ai"), UnsupportedProviderError);
   assert.equal(createProvider("mock").name, "mock");
   assert.equal(providerNameFromEnv({ QUESTMIND_PROVIDER: "mock" }), "mock");
-  assert.throws(() => providerNameFromEnv({}), ProviderNotConfiguredError);
+  assert.equal(providerNameFromEnv({}), "mock");
+  assert.equal(providerNameFromEnv({ OPENROUTER_API_KEY: "key" }), "openrouter");
+  assert.throws(() => createProvider("openrouter", { env: {} }), ProviderConfigurationError);
+  assert.throws(() => providerNameFromEnv({ QUESTMIND_PROVIDER: "openrouter" }), ProviderConfigurationError);
+});
+
+test("normalizes an OpenRouter response and sends context without exposing browser code", async () => {
+  let request;
+  const provider = createOpenRouterProvider({
+    apiKey: "secret",
+    model: "openrouter/free",
+    siteUrl: "https://questmind.example",
+    appName: "QuestMind",
+    fetchImpl: async (url, options) => {
+      request = { url, options };
+      return new Response(JSON.stringify({ choices: [{ message: { content: " Build the market before ending the round." } }] }), { status: 200 });
+    },
+  });
+  const result = await provider.answer({
+    game: "Scythe",
+    mode: "Automa",
+    playerCount: 2,
+    question: "What should I do?",
+    attachments: [{ name: "board.png", type: "image/png" }],
+  });
+  assert.equal(result.text, "Build the market before ending the round.");
+  assert.equal(result.provider, "openrouter");
+  assert.equal(request.options.headers.Authorization, "Bearer secret");
+  assert.equal(request.options.headers["HTTP-Referer"], "https://questmind.example");
+  assert.equal(JSON.parse(request.options.body).model, "openrouter/free");
+});
+
+test("normalizes OpenRouter HTTP and payload failures", async () => {
+  const provider = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async () => new Response(JSON.stringify({ error: { message: "Rate limited" } }), { status: 429 }),
+  });
+  await assert.rejects(() => provider.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error instanceof ProviderRequestError && error.code === "PROVIDER_HTTP_ERROR" && /Rate limited/.test(error.message));
+  const invalid = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async () => new Response(JSON.stringify({ choices: [] }), { status: 200 }),
+  });
+  await assert.rejects(() => invalid.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error.code === "PROVIDER_INVALID_RESPONSE");
+  const invalidJson = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async () => new Response("not json", { status: 200 }),
+  });
+  await assert.rejects(() => invalidJson.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error.code === "PROVIDER_INVALID_JSON");
+});
+
+test("aborts a slow OpenRouter request", async () => {
+  const provider = createOpenRouterProvider({
+    apiKey: "secret",
+    timeoutMs: 100,
+    fetchImpl: (_url, { signal }) => new Promise((resolve, reject) => {
+      signal.addEventListener("abort", () => {
+        const error = new Error("aborted");
+        error.name = "AbortError";
+        reject(error);
+      });
+    }),
+  });
+  await assert.rejects(() => provider.answer({ game: "Root", mode: "Solo / Clockwork", playerCount: 1, question: "Help" }), (error) => error.code === "PROVIDER_TIMEOUT");
 });
