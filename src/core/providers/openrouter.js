@@ -33,6 +33,19 @@ function messageContent(request) {
   return images.length ? [{ type: "text", text }, ...images] : text;
 }
 
+function extractAssistantText(payload) {
+  const content = payload?.choices?.[0]?.message?.content;
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    const textParts = content
+      .filter((part) => part && (part.type === "text" || part.type === "output_text") && typeof part.text === "string")
+      .map((part) => part.text.trim())
+      .filter(Boolean);
+    return textParts.join("\n");
+  }
+  return "";
+}
+
 export function createOpenRouterProvider(options = {}) {
   const config = readConfig(options.env, options);
   if (typeof config.fetchImpl !== "function") {
@@ -67,15 +80,19 @@ export function createOpenRouterProvider(options = {}) {
         try {
           payload = await response.json();
         } catch {
-          throw new ProviderRequestError("OpenRouter returned invalid JSON.", "PROVIDER_INVALID_JSON");
+          throw new ProviderRequestError(`OpenRouter returned a non-JSON response (HTTP ${response.status}).`, "PROVIDER_INVALID_JSON");
         }
         if (!response.ok) {
           const detail = typeof payload?.error?.message === "string" ? `: ${payload.error.message}` : "";
           throw new ProviderRequestError(`OpenRouter request failed with HTTP ${response.status}${detail}`, "PROVIDER_HTTP_ERROR");
         }
-        const text = payload?.choices?.[0]?.message?.content;
+        if (payload?.error && typeof payload.error === "object") {
+          const detail = typeof payload.error.message === "string" ? `: ${payload.error.message}` : "";
+          throw new ProviderRequestError(`OpenRouter returned an API error${detail}`, "PROVIDER_API_ERROR");
+        }
+        const text = extractAssistantText(payload);
         if (typeof text !== "string" || !text.trim()) {
-          throw new ProviderRequestError("OpenRouter returned no assistant message.", "PROVIDER_INVALID_RESPONSE");
+          throw new ProviderRequestError("OpenRouter returned no readable assistant content in choices[0].message.content.", "PROVIDER_INVALID_RESPONSE");
         }
         const normalized = normalizeAssistantResponse(text);
         return {

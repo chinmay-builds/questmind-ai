@@ -85,6 +85,21 @@ test("normalizes an OpenRouter response and sends context without exposing brows
   assert.equal(JSON.parse(request.options.body).model, "openrouter/free");
 });
 
+test("accepts OpenRouter structured text content parts", async () => {
+  const provider = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async () => new Response(JSON.stringify({
+      choices: [{ message: { content: [
+        { type: "text", text: "ANSWER: Resolve the conflict first." },
+        { type: "output_text", text: "EVIDENCE: Supplied board image." },
+      ] } }],
+    }), { status: 200 }),
+  });
+  const result = await provider.answer({ game: "Root", mode: "Competitive", playerCount: 3, question: "What matters now?" });
+  assert.equal(result.text, "Resolve the conflict first.");
+  assert.equal(result.evidence, "Supplied board image.");
+});
+
 test("normalizes grounded answer format without allowing HTML or invented sources", () => {
   assert.deepEqual(normalizeAssistantResponse("ANSWER: Check the rule.\nEVIDENCE: Rulebook, page 4."), {
     answer: "Check the rule.",
@@ -109,7 +124,12 @@ test("normalizes OpenRouter HTTP and payload failures", async () => {
     apiKey: "secret",
     fetchImpl: async () => new Response("not json", { status: 200 }),
   });
-  await assert.rejects(() => invalidJson.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error.code === "PROVIDER_INVALID_JSON");
+  await assert.rejects(() => invalidJson.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error.code === "PROVIDER_INVALID_JSON" && /non-JSON response/.test(error.message));
+  const apiError = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async () => new Response(JSON.stringify({ error: { message: "Upstream unavailable" } }), { status: 200 }),
+  });
+  await assert.rejects(() => apiError.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error.code === "PROVIDER_API_ERROR" && /Upstream unavailable/.test(error.message));
 });
 
 test("aborts a slow OpenRouter request", async () => {
