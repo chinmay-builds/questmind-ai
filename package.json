@@ -1,0 +1,17 @@
+{
+  "name": "questmind-ai",
+  "version": "0.1.0",
+  "description": "A small local-first foundation for an AI game companion",
+  "type": "module",
+  "bin": {
+    "questmind": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
