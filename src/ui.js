@@ -31,8 +31,10 @@ function showRoute() {
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 
-routeLinks.forEach((link) => link.addEventListener("click", () => {
+routeLinks.forEach((link) => link.addEventListener("click", (event) => {
+  event.preventDefault();
   if (link.dataset.route === "chat") history.pushState(null, "", "#chat");
+  if (link.dataset.route === "home") history.pushState(null, "", "/");
   showRoute();
 }));
 window.addEventListener("hashchange", showRoute);

@@ -4,7 +4,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml" };
 const server = createServer(async (request, response) => {
   const requested = request.url === "/" ? "/index.html" : request.url;
   const file = normalize(join(root, requested));
