@@ -65,6 +65,10 @@ the returned title, URL, and snippet are sent to the model; the key never
 reaches the browser. Without that key, QuestMind explicitly tells the model
 that real-time search was not run and will not invent a source.
 
+The companion selector is available in both the table context panel and the
+chat top rail, including narrow mobile layouts. A selected alias is only a
+safe identifier; its configured provider/model remains server-side.
+
 ### OpenRouter provider
 
 The first real provider is server-side OpenRouter. It is not imported by the

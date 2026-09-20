@@ -36,6 +36,15 @@
         </a>
         <div class="topbar-actions">
           <div class="topbar-note"><span class="status-dot"></span> LOCAL MODE <span class="slash">/</span> NO AI CONNECTED</div>
+          <label class="topbar-model" for="topbar-model-select">
+            <span>COMPANION</span>
+            <select id="topbar-model-select" aria-label="Choose QuestMind companion">
+              <option value="rules-sage">Rules Sage</option>
+              <option value="strategy-coach" disabled>Strategy Coach — UNAVAILABLE</option>
+              <option value="tabletop-tactician" disabled>Tabletop Tactician — UNAVAILABLE</option>
+              <option value="lorekeeper" disabled>Lorekeeper — UNAVAILABLE</option>
+            </select>
+          </label>
           <a class="topbar-cta" id="topbar-route" href="#chat" data-route="chat">ENTER QUESTMIND <span>↗</span></a>
         </div>
       </header>
@@ -104,7 +113,7 @@
               <option value="tabletop-tactician" disabled>Tabletop Tactician — UNAVAILABLE</option>
               <option value="lorekeeper" disabled>Lorekeeper — UNAVAILABLE</option>
             </select>
-            <p class="helper-text" id="model-note">Loading server availability…</p>
+            <p class="helper-text" id="model-note">Loading server availability and source search…</p>
           </div>
 
           <div class="context-readout" aria-live="polite">

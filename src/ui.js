@@ -6,6 +6,7 @@ import { fallbackResponse } from "./core/fallback.js";
 const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
 const modelSelect = document.querySelector("#model-select");
+const topbarModelSelect = document.querySelector("#topbar-model-select");
 const modelNote = document.querySelector("#model-note");
 const playerOptions = document.querySelector("#player-options");
 const contextSummary = document.querySelector("#context-summary");
@@ -83,18 +84,29 @@ function updatePlayerContext(game = games.find(({ name }) => name === gameSelect
 
 function renderModels() {
   modelSelect.replaceChildren();
+  topbarModelSelect.replaceChildren();
   for (const model of modelAliases) {
     const status = modelRoster.get(model.alias);
     const configured = status?.configured ?? (!useServerProvider && model.alias === "rules-sage");
     const option = new Option(`${model.label}${configured ? "" : " — UNAVAILABLE"}`, model.alias);
     option.disabled = !configured;
     modelSelect.add(option);
+    topbarModelSelect.add(option.cloneNode(true));
   }
   const firstAvailable = [...modelSelect.options].find((option) => !option.disabled);
-  if (firstAvailable) modelSelect.value = firstAvailable.value;
+  if (firstAvailable) {
+    modelSelect.value = firstAvailable.value;
+    topbarModelSelect.value = firstAvailable.value;
+  }
   modelNote.textContent = useServerProvider
     ? (firstAvailable ? "Server-configured companions are ready." : "No companion is configured yet. Ask an administrator to add model env vars.")
     : "LOCAL MOCK / model aliases are preview-only until a server provider is configured.";
+}
+
+function syncModelSelectors(source) {
+  const value = source.value;
+  modelSelect.value = value;
+  topbarModelSelect.value = value;
 }
 
 async function loadModels() {
@@ -158,6 +170,8 @@ function addMessage(kind, text, imageUrls = [], evidence = "") {
 gameSelect.addEventListener("change", updateContext);
 modeSelect.addEventListener("change", () => updatePlayerContext());
 playerOptions.addEventListener("change", () => updatePlayerContext());
+modelSelect.addEventListener("change", () => syncModelSelectors(modelSelect));
+topbarModelSelect.addEventListener("change", () => syncModelSelectors(topbarModelSelect));
 attachButton.addEventListener("click", () => imageInput.click());
 imageInput.addEventListener("change", () => {
   for (const file of imageInput.files) {
