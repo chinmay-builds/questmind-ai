@@ -1,4 +1,5 @@
 import { InvalidQuestRequestError } from "./errors.js";
+import { validateGameContext } from "../rules.js";
 
 /**
  * @typedef {{ name: string, type: string, size?: number, dataUrl?: string }} ImageAttachment
@@ -7,7 +8,8 @@ import { InvalidQuestRequestError } from "./errors.js";
  *   mode: string,
  *   playerCount: number,
  *   question: string,
- *   attachments?: ImageAttachment[]
+ *   attachments?: ImageAttachment[],
+ *   model?: string
  * }} QuestRequest
  * @typedef {{ text: string, evidence: string, provider: string, context: { game: string, mode: string, playerCount: number, attachmentCount: number } }} QuestResponse
  */
@@ -24,8 +26,8 @@ export function validateQuestRequest(input) {
   if (typeof mode !== "string" || !mode.trim()) {
     throw new InvalidQuestRequestError("mode must be a non-empty string.");
   }
-  if (!Number.isInteger(playerCount) || playerCount < 1 || playerCount > 20) {
-    throw new InvalidQuestRequestError("playerCount must be an integer from 1 to 20.");
+  if (!Number.isInteger(playerCount)) {
+    throw new InvalidQuestRequestError("playerCount must be an integer.");
   }
   if (typeof question !== "string" || !question.trim()) {
     throw new InvalidQuestRequestError("question must be a non-empty string.");
@@ -33,6 +35,11 @@ export function validateQuestRequest(input) {
   if (!Array.isArray(attachments)) {
     throw new InvalidQuestRequestError("attachments must be an array.");
   }
+  if (model !== undefined && (typeof model !== "string" || !model.trim())) {
+    throw new InvalidQuestRequestError("model must be a non-empty alias.");
+  }
+  const contextValidation = validateGameContext(game.trim(), mode.trim(), playerCount);
+  if (!contextValidation.ok) throw new InvalidQuestRequestError(contextValidation.message);
   for (const attachment of attachments) {
     if (!attachment || typeof attachment.name !== "string" || typeof attachment.type !== "string") {
       throw new InvalidQuestRequestError("Each attachment needs a name and MIME type.");
@@ -46,8 +53,9 @@ export function validateQuestRequest(input) {
     mode: mode.trim(),
     playerCount,
     question: question.trim(),
-    model: typeof model === "string" && model.trim() ? model.trim() : undefined,
+    model: typeof model === "string" && model.trim() ? model.trim().toLowerCase() : undefined,
     webSearch: webSearch !== false,
+    ruleContext: contextValidation.context,
     attachments: attachments.map(({ name, type, size, dataUrl }) => ({ name, type, size, dataUrl })),
   };
 }

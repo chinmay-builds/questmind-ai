@@ -4,9 +4,13 @@ import { answerQuestion } from "../src/companion.js";
 import { askQuestMind } from "../src/core/api.js";
 import { createProvider } from "../src/core/providers/index.js";
 import { providerNameFromEnv } from "../src/core/config.js";
+import { modelConfigFromEnv, resolveModelAlias } from "../src/core/config.js";
+import { getPlayerOptions } from "../src/games.js";
+import { getRuleContext } from "../src/rules.js";
 import { createOpenRouterProvider } from "../src/core/providers/openrouter.js";
 import { InvalidQuestRequestError, ProviderConfigurationError, ProviderRequestError, UnsupportedProviderError } from "../src/core/errors.js";
 import askHandler from "../api/ask.js";
+import modelsHandler from "../api/models.js";
 import { normalizeAssistantResponse } from "../src/core/contracts.js";
 
 test("returns an explicitly marked placeholder answer", () => {
@@ -58,6 +62,39 @@ test("requires an explicit supported provider", () => {
   assert.throws(() => providerNameFromEnv({ QUESTMIND_PROVIDER: "openrouter" }), ProviderConfigurationError);
 });
 
+test("resolves safe model aliases without exposing secrets", () => {
+  const env = {
+    QUESTMIND_PROVIDER: "openrouter",
+    QUESTMIND_MODEL_RULES_SAGE: "provider/rules-model",
+    QUESTMIND_PROVIDER_RULES_SAGE: "openrouter",
+  };
+  assert.equal(resolveModelAlias("rules-sage", env).model, "provider/rules-model");
+  assert.equal(resolveModelAlias("rules-sage", env).provider, "openrouter");
+  assert.equal(modelConfigFromEnv(env).find((model) => model.alias === "rules-sage").configured, true);
+  assert.equal(modelConfigFromEnv(env).find((model) => model.alias === "lorekeeper").configured, false);
+  assert.throws(() => resolveModelAlias("lorekeeper", env), ProviderConfigurationError);
+});
+
+test("enforces game and mode-specific player bounds", () => {
+  assert.deepEqual(getPlayerOptions({ playerOptions: [1, 2, 3, 4] }, "Solo / Clockwork"), [1]);
+  assert.deepEqual(getPlayerOptions({ playerOptions: [2, 3, 4] }, "Two-player"), [2]);
+  assert.throws(() => askQuestMind({ game: "Catan", mode: "Standard", playerCount: 2, question: "Help" }, { provider: "mock" }), InvalidQuestRequestError);
+});
+
+test("includes honest rule context in provider requests and evidence", async () => {
+  assert.match(getRuleContext("Catan", "Standard").summary, /No verified rule excerpt/);
+  const provider = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      assert.match(body.messages[1].content, /No verified rule excerpt/);
+      return new Response(JSON.stringify({ choices: [{ message: { content: "ANSWER: I cannot verify this.\nEVIDENCE: Rulebook context not provided." } }] }), { status: 200 });
+    },
+  });
+  const result = await provider.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" });
+  assert.equal(result.evidence, "Rulebook context not provided.");
+});
+
 test("normalizes an OpenRouter response and sends context without exposing browser code", async () => {
   let request;
   const provider = createOpenRouterProvider({
@@ -85,6 +122,21 @@ test("normalizes an OpenRouter response and sends context without exposing brows
   assert.equal(JSON.parse(request.options.body).model, "openrouter/free");
 });
 
+test("accepts OpenRouter structured text content parts", async () => {
+  const provider = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async () => new Response(JSON.stringify({
+      choices: [{ message: { content: [
+        { type: "text", text: "ANSWER: Resolve the conflict first." },
+        { type: "output_text", text: "EVIDENCE: Supplied board image." },
+      ] } }],
+    }), { status: 200 }),
+  });
+  const result = await provider.answer({ game: "Root", mode: "Competitive", playerCount: 3, question: "What matters now?" });
+  assert.equal(result.text, "Resolve the conflict first.");
+  assert.equal(result.evidence, "Supplied board image.");
+});
+
 test("normalizes grounded answer format without allowing HTML or invented sources", () => {
   assert.deepEqual(normalizeAssistantResponse("ANSWER: Check the rule.\nEVIDENCE: Rulebook, page 4."), {
     answer: "Check the rule.",
@@ -109,7 +161,12 @@ test("normalizes OpenRouter HTTP and payload failures", async () => {
     apiKey: "secret",
     fetchImpl: async () => new Response("not json", { status: 200 }),
   });
-  await assert.rejects(() => invalidJson.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error.code === "PROVIDER_INVALID_JSON");
+  await assert.rejects(() => invalidJson.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error.code === "PROVIDER_INVALID_JSON" && /non-JSON response/.test(error.message));
+  const apiError = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async () => new Response(JSON.stringify({ error: { message: "Upstream unavailable" } }), { status: 200 }),
+  });
+  await assert.rejects(() => apiError.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" }), (error) => error.code === "PROVIDER_API_ERROR" && /Upstream unavailable/.test(error.message));
 });
 
 test("aborts a slow OpenRouter request", async () => {
@@ -145,6 +202,41 @@ test("API handler rejects non-POST requests", async () => {
   const response = createTestResponse();
   await askHandler({ method: "GET", headers: {} }, response);
   assert.equal(response.statusCode, 405);
+});
+
+test("model roster is safe and marks missing server aliases unavailable", async () => {
+  const original = process.env.QUESTMIND_MODEL_RULES_SAGE;
+  process.env.QUESTMIND_MODEL_RULES_SAGE = "provider/rules";
+  const response = createTestResponse();
+  await modelsHandler({ method: "GET" }, response);
+  if (original === undefined) delete process.env.QUESTMIND_MODEL_RULES_SAGE;
+  else process.env.QUESTMIND_MODEL_RULES_SAGE = original;
+  const roster = JSON.parse(response.body).models;
+  assert.equal(roster.find((model) => model.alias === "rules-sage").configured, true);
+  assert.equal(roster.find((model) => model.alias === "rules-sage").model, undefined);
+});
+
+test("provider failures produce a safe retry fallback", async () => {
+  const originalProvider = process.env.QUESTMIND_PROVIDER;
+  const originalKey = process.env.OPENROUTER_API_KEY;
+  const originalModel = process.env.QUESTMIND_MODEL_RULES_SAGE;
+  process.env.QUESTMIND_PROVIDER = "mock";
+  delete process.env.OPENROUTER_API_KEY;
+  delete process.env.QUESTMIND_MODEL_RULES_SAGE;
+  const response = createTestResponse();
+  await askHandler({
+    method: "POST",
+    headers: { "content-length": "100" },
+    body: { game: "Catan", mode: "Standard", playerCount: 4, model: "rules-sage", question: "Help" },
+  }, response);
+  for (const [key, value] of [["QUESTMIND_PROVIDER", originalProvider], ["OPENROUTER_API_KEY", originalKey], ["QUESTMIND_MODEL_RULES_SAGE", originalModel]]) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+  const payload = JSON.parse(response.body);
+  assert.equal(response.statusCode, 503);
+  assert.equal(payload.fallback.provider, "fallback");
+  assert.match(payload.fallback.text, /couldn't verify|retry/i);
 });
 
 function createTestResponse() {

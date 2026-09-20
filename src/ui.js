@@ -1,10 +1,13 @@
-import { games } from "./games.js";
+import { games, getPlayerOptions } from "./games.js";
 import { askQuestMind } from "./core/api.js";
+import { modelAliases } from "./core/config.js";
+import { fallbackResponse } from "./core/fallback.js";
 
 const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
 const modelSelect = document.querySelector("#model-select");
 const webSearchToggle = document.querySelector("#web-search-toggle");
+const modelNote = document.querySelector("#model-note");
 const playerOptions = document.querySelector("#player-options");
 const contextSummary = document.querySelector("#context-summary");
 const composer = document.querySelector("#composer");
@@ -29,6 +32,7 @@ async function loadModelConfig() {
 }
 
 const useServerProvider = !["localhost", "127.0.0.1"].includes(window.location.hostname);
+let modelRoster = new Map();
 
 function showRoute() {
   const isChat = window.location.hash === "#chat";
@@ -55,11 +59,14 @@ for (const game of games) {
   gameSelect.add(new Option(game.name, game.name));
 }
 
-for (const count of [1, 2, 3, 4, 5, 6]) {
+function renderPlayers(game) {
+  playerOptions.replaceChildren();
+  for (const count of getPlayerOptions(game, modeSelect.value)) {
   const label = document.createElement("label");
   label.className = "player-option";
   label.innerHTML = `<input type="radio" name="players" value="${count}" ${count === 4 ? "checked" : ""}><span>${count}</span>`;
-  playerOptions.append(label);
+    playerOptions.append(label);
+  }
 }
 
 function selectedPlayers() {
@@ -69,7 +76,48 @@ function selectedPlayers() {
 function updateContext() {
   const game = games.find(({ name }) => name === gameSelect.value) ?? games[0];
   modeSelect.replaceChildren(...game.modes.map((mode) => new Option(mode, mode)));
+  updatePlayerContext(game);
+}
+
+function updatePlayerContext(game = games.find(({ name }) => name === gameSelect.value) ?? games[0]) {
+  const current = Number(selectedPlayers());
+  renderPlayers(game);
+  const options = getPlayerOptions(game, modeSelect.value);
+  const preferred = options.includes(current) ? current : options[0];
+  const selected = playerOptions.querySelector(`input[value="${preferred}"]`);
+  if (selected) selected.checked = true;
   contextSummary.textContent = `${game.name} · ${modeSelect.value} · ${selectedPlayers()} ${selectedPlayers() === "1" ? "player" : "players"}`;
+}
+
+function renderModels() {
+  modelSelect.replaceChildren();
+  for (const model of modelAliases) {
+    const status = modelRoster.get(model.alias);
+    const configured = status?.configured ?? (!useServerProvider && model.alias === "rules-sage");
+    const option = new Option(`${model.label}${configured ? "" : " — UNAVAILABLE"}`, model.alias);
+    option.disabled = !configured;
+    modelSelect.add(option);
+  }
+  const firstAvailable = [...modelSelect.options].find((option) => !option.disabled);
+  if (firstAvailable) modelSelect.value = firstAvailable.value;
+  modelNote.textContent = useServerProvider
+    ? (firstAvailable ? "Server-configured companions are ready." : "No companion is configured yet. Ask an administrator to add model env vars.")
+    : "LOCAL MOCK / model aliases are preview-only until a server provider is configured.";
+}
+
+async function loadModels() {
+  if (!useServerProvider) {
+    renderModels();
+    return;
+  }
+  try {
+    const response = await fetch("/api/models");
+    const payload = await response.json();
+    modelRoster = new Map((payload.models ?? []).map((model) => [model.alias, model]));
+  } catch {
+    modelNote.textContent = "MODEL ROSTER UNAVAILABLE / retrying with server defaults.";
+  }
+  renderModels();
 }
 
 function renderAttachments() {
@@ -116,7 +164,8 @@ function addMessage(kind, text, imageUrls = [], evidence = "") {
 }
 
 gameSelect.addEventListener("change", updateContext);
-playerOptions.addEventListener("change", updateContext);
+modeSelect.addEventListener("change", () => updatePlayerContext());
+playerOptions.addEventListener("change", () => updatePlayerContext());
 attachButton.addEventListener("click", () => imageInput.click());
 imageInput.addEventListener("change", () => {
   for (const file of imageInput.files) {
@@ -143,7 +192,10 @@ async function requestAnswer(request) {
   });
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(payload?.error?.message ?? `QuestMind API failed (${response.status}).`);
+    const error = new Error(payload?.error?.message ?? `QuestMind API failed (${response.status}).`);
+    error.code = payload?.error?.code;
+    error.fallback = payload?.fallback;
+    throw error;
   }
   return payload;
 }
@@ -158,8 +210,7 @@ composer.addEventListener("submit", async (event) => {
   submitButton.disabled = true;
   submitButton.querySelector("span").textContent = "THINKING…";
   composerNote.textContent = useServerProvider ? "CONNECTING TO QUESTMIND CORE…" : "LOCAL MOCK / NO AI CONNECTED";
-  try {
-    const response = await requestAnswer({
+  const request = {
       game: gameSelect.value,
       mode: modeSelect.value,
       playerCount: Number(selectedPlayers()),
@@ -172,15 +223,18 @@ composer.addEventListener("submit", async (event) => {
         size: file.size,
         dataUrl: await fileAsDataUrl(file),
       }))),
-    });
+    };
+  try {
+    const response = await requestAnswer(request);
     questionInput.value = "";
     attachments.splice(0).forEach(({ url }) => URL.revokeObjectURL(url));
     renderAttachments();
     window.setTimeout(() => addMessage("assistant", response.text, [], response.evidence), 260);
     composerNote.textContent = useServerProvider ? "CONNECTED VIA QUESTMIND CORE." : "LOCAL MOCK / NO AI CONNECTED";
   } catch (error) {
-    addMessage("assistant", `ERROR: ${error.message} Please try again or check the server configuration.`);
-    composerNote.textContent = "CONNECTION ERROR / NO FALLBACK WAS USED";
+    const fallback = error.fallback ?? fallbackResponse(request, error.message);
+    addMessage("assistant", fallback.text, [], fallback.evidence);
+    composerNote.textContent = `CONNECTION ERROR / ${error.code ?? "RETRY AVAILABLE"}`;
   } finally {
     submitButton.disabled = false;
     submitButton.querySelector("span").textContent = "SEND";
@@ -188,5 +242,6 @@ composer.addEventListener("submit", async (event) => {
 });
 
 updateContext();
-loadModelConfig();
+renderModels();
+loadModels();
 showRoute();
