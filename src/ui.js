@@ -12,12 +12,14 @@ const chatCount = document.querySelector("#chat-count");
 const imageInput = document.querySelector("#image-input");
 const attachButton = document.querySelector("#attach-button");
 const attachmentStrip = document.querySelector("#attachment-strip");
+const composerNote = document.querySelector("#composer-note");
 const landingView = document.querySelector("#landing-view");
 const chatView = document.querySelector("#chat-view");
 const routeLinks = document.querySelectorAll("[data-route]");
 const topbarRoute = document.querySelector("#topbar-route");
 const attachments = [];
 let messageCount = 1;
+const useServerProvider = !["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 function showRoute() {
   const isChat = window.location.hash === "#chat";
@@ -108,24 +110,64 @@ imageInput.addEventListener("change", () => {
   imageInput.value = "";
   renderAttachments();
 });
-composer.addEventListener("submit", (event) => {
+function fileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result));
+    reader.addEventListener("error", () => reject(new Error(`Could not read ${file.name}.`)));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function requestAnswer(request) {
+  if (!useServerProvider) return askQuestMind(request, { provider: "mock" });
+  const response = await fetch("/api/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.error?.message ?? `QuestMind API failed (${response.status}).`);
+  }
+  return payload;
+}
+
+composer.addEventListener("submit", async (event) => {
   event.preventDefault();
   const question = questionInput.value.trim();
   if (!question) return;
   const imageUrls = attachments.map(({ url }) => url);
   addMessage("user", question, imageUrls);
-  const game = gameSelect.value;
-  const response = askQuestMind({
-    game,
-    mode: modeSelect.value,
-    playerCount: Number(selectedPlayers()),
-    question,
-    attachments: attachments.map(({ file }) => ({ name: file.name, type: file.type, size: file.size })),
-  }, { provider: "mock" }).text;
-  questionInput.value = "";
-  attachments.splice(0).forEach(({ url }) => URL.revokeObjectURL(url));
-  renderAttachments();
-  window.setTimeout(() => addMessage("assistant", response), 260);
+  const submitButton = composer.querySelector(".send-button");
+  submitButton.disabled = true;
+  submitButton.querySelector("span").textContent = "THINKING…";
+  composerNote.textContent = useServerProvider ? "CONNECTING TO QUESTMIND CORE…" : "LOCAL MOCK / NO AI CONNECTED";
+  try {
+    const response = await requestAnswer({
+      game: gameSelect.value,
+      mode: modeSelect.value,
+      playerCount: Number(selectedPlayers()),
+      question,
+      attachments: await Promise.all(attachments.map(async ({ file }) => ({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        dataUrl: await fileAsDataUrl(file),
+      }))),
+    });
+    questionInput.value = "";
+    attachments.splice(0).forEach(({ url }) => URL.revokeObjectURL(url));
+    renderAttachments();
+    window.setTimeout(() => addMessage("assistant", response.text), 260);
+    composerNote.textContent = useServerProvider ? "CONNECTED VIA QUESTMIND CORE." : "LOCAL MOCK / NO AI CONNECTED";
+  } catch (error) {
+    addMessage("assistant", `ERROR: ${error.message} Please try again or check the server configuration.`);
+    composerNote.textContent = "CONNECTION ERROR / NO FALLBACK WAS USED";
+  } finally {
+    submitButton.disabled = false;
+    submitButton.querySelector("span").textContent = "SEND";
+  }
 });
 
 updateContext();

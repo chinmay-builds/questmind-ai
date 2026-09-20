@@ -6,6 +6,7 @@ import { createProvider } from "../src/core/providers/index.js";
 import { providerNameFromEnv } from "../src/core/config.js";
 import { createOpenRouterProvider } from "../src/core/providers/openrouter.js";
 import { InvalidQuestRequestError, ProviderConfigurationError, ProviderRequestError, UnsupportedProviderError } from "../src/core/errors.js";
+import askHandler from "../api/ask.js";
 
 test("returns an explicitly marked placeholder answer", () => {
   const response = answerQuestion("Can I draw two cards?");
@@ -114,3 +115,34 @@ test("aborts a slow OpenRouter request", async () => {
   });
   await assert.rejects(() => provider.answer({ game: "Root", mode: "Solo / Clockwork", playerCount: 1, question: "Help" }), (error) => error.code === "PROVIDER_TIMEOUT");
 });
+
+test("API handler returns explicit config errors without an OpenRouter key", async () => {
+  const original = process.env.QUESTMIND_PROVIDER;
+  delete process.env.QUESTMIND_PROVIDER;
+  const response = createTestResponse();
+  await askHandler({
+    method: "POST",
+    headers: { "content-length": "80" },
+    body: { game: "Catan", mode: "Standard", playerCount: 4, question: "Help" },
+  }, response);
+  if (original) process.env.QUESTMIND_PROVIDER = original;
+  assert.equal(response.statusCode, 503);
+  assert.equal(JSON.parse(response.body).error.code, "PROVIDER_CONFIGURATION_ERROR");
+});
+
+test("API handler rejects non-POST requests", async () => {
+  const response = createTestResponse();
+  await askHandler({ method: "GET", headers: {} }, response);
+  assert.equal(response.statusCode, 405);
+});
+
+function createTestResponse() {
+  return {
+    statusCode: 200,
+    headers: {},
+    body: "",
+    status(code) { this.statusCode = code; return this; },
+    setHeader(name, value) { this.headers[name] = value; return this; },
+    end(body = "") { this.body = body; },
+  };
+}
