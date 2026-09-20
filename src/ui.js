@@ -7,6 +7,7 @@ const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
 const modelSelect = document.querySelector("#model-select");
 const topbarModelSelect = document.querySelector("#topbar-model-select");
+const webSearchToggle = document.querySelector("#web-search-toggle");
 const modelNote = document.querySelector("#model-note");
 const playerOptions = document.querySelector("#player-options");
 const contextSummary = document.querySelector("#context-summary");
@@ -24,6 +25,7 @@ const routeLinks = document.querySelectorAll("[data-route]");
 const topbarRoute = document.querySelector("#topbar-route");
 const attachments = [];
 let messageCount = 1;
+
 const useServerProvider = !["localhost", "127.0.0.1"].includes(window.location.hostname);
 let modelRoster = new Map();
 
@@ -94,19 +96,16 @@ function renderModels() {
     topbarModelSelect.add(option.cloneNode(true));
   }
   const firstAvailable = [...modelSelect.options].find((option) => !option.disabled);
-  if (firstAvailable) {
-    modelSelect.value = firstAvailable.value;
-    topbarModelSelect.value = firstAvailable.value;
-  }
+  if (firstAvailable) modelSelect.value = firstAvailable.value;
+  topbarModelSelect.value = firstAvailable.value;
   modelNote.textContent = useServerProvider
     ? (firstAvailable ? "Server-configured companions are ready." : "No companion is configured yet. Ask an administrator to add model env vars.")
     : "LOCAL MOCK / model aliases are preview-only until a server provider is configured.";
 }
 
 function syncModelSelectors(source) {
-  const value = source.value;
-  modelSelect.value = value;
-  topbarModelSelect.value = value;
+  modelSelect.value = source.value;
+  topbarModelSelect.value = source.value;
 }
 
 async function loadModels() {
@@ -220,8 +219,9 @@ composer.addEventListener("submit", async (event) => {
       game: gameSelect.value,
       mode: modeSelect.value,
       playerCount: Number(selectedPlayers()),
-      question,
       model: modelSelect.value,
+      webSearch: webSearchToggle.checked,
+      question,
       attachments: await Promise.all(attachments.map(async ({ file }) => ({
         name: file.name,
         type: file.type,

@@ -93,6 +93,9 @@ h1 em { color: var(--blue); font-style: normal; }
 .player-option input:checked + span { color: var(--white); background: var(--blue); border-color: var(--blue); box-shadow: 2px 2px 0 var(--ink); }
 .player-option input:focus-visible + span { outline: 3px solid var(--red); outline-offset: 2px; }
 .model-lockup { margin-bottom: 26px; }
+.model-select { margin-bottom: 10px; }
+.search-toggle { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 12px; cursor: pointer; }
+.search-toggle input { accent-color: var(--blue); width: 15px; height: 15px; }
 .model-control { display: flex; align-items: center; gap: 8px; padding: 12px; border: 2px dashed #a9a08f; color: #969082; background: #e7decc; }
 .model-spark { color: #aaa18f; }
 .model-name { font-size: 13px; flex: 1; }
