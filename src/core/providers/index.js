@@ -9,8 +9,12 @@ const providers = new Map([
 ]);
 
 export function createProvider(name, options = {}) {
-  const model = options.modelAlias ? resolveModelAlias(options.modelAlias, options.env) : null;
-  const selectedName = typeof name === "string" && name.trim() ? name : model?.provider ?? providerNameFromEnv(options.env);
+  const explicitName = typeof name === "string" && name.trim() ? name.trim().toLowerCase() : null;
+  const configuredName = explicitName ?? providerNameFromEnv(options.env);
+  const model = options.modelAlias && configuredName !== "mock"
+    ? resolveModelAlias(options.modelAlias, options.env)
+    : null;
+  const selectedName = explicitName ?? model?.provider ?? configuredName;
   const factory = providers.get(selectedName.trim().toLowerCase());
   if (!factory) {
     throw new UnsupportedProviderError(name);

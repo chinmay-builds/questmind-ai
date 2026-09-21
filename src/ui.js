@@ -89,7 +89,7 @@ function renderModels() {
   topbarModelSelect.replaceChildren();
   for (const model of modelAliases) {
     const status = modelRoster.get(model.alias);
-    const configured = status?.configured ?? (!useServerProvider && model.alias === "rules-sage");
+    const configured = status?.configured ?? !useServerProvider;
     const option = new Option(`${model.label}${configured ? "" : " — UNAVAILABLE"}`, model.alias);
     option.disabled = !configured;
     modelSelect.add(option);

@@ -56,6 +56,7 @@ test("rejects malformed core requests", () => {
 test("requires an explicit supported provider", () => {
   assert.throws(() => createProvider("hosted-ai"), UnsupportedProviderError);
   assert.equal(createProvider("mock").name, "mock");
+  assert.equal(createProvider("mock", { modelAlias: "rules-sage", env: {} }).name, "mock");
   assert.equal(providerNameFromEnv({ QUESTMIND_PROVIDER: "mock" }), "mock");
   assert.equal(providerNameFromEnv({}), "mock");
   assert.equal(providerNameFromEnv({ OPENROUTER_API_KEY: "key" }), "openrouter");
@@ -74,6 +75,20 @@ test("resolves safe model aliases without exposing secrets", () => {
   assert.equal(modelConfigFromEnv(env).find((model) => model.alias === "rules-sage").configured, true);
   assert.equal(modelConfigFromEnv(env).find((model) => model.alias === "lorekeeper").configured, false);
   assert.throws(() => resolveModelAlias("lorekeeper", env), ProviderConfigurationError);
+});
+
+test("shared model configuration enables every alias without exposing the model id", () => {
+  const roster = modelConfigFromEnv({
+    QUESTMIND_PROVIDER: "openrouter",
+    OPENROUTER_API_KEY: "secret",
+    OPENROUTER_MODEL: "openrouter/free",
+  });
+  assert.deepEqual(roster.map((model) => model.configured), [true, true, true, true]);
+  assert.equal(roster[0].model, undefined);
+  assert.equal(resolveModelAlias("lorekeeper", {
+    OPENROUTER_API_KEY: "secret",
+    OPENROUTER_MODEL: "openrouter/free",
+  }).model, "openrouter/free");
 });
 
 test("enforces game and mode-specific player bounds", () => {
@@ -233,7 +248,7 @@ test("model roster is safe and marks missing server aliases unavailable", async 
   assert.equal(roster.find((model) => model.alias === "rules-sage").model, undefined);
 });
 
-test("provider failures produce a safe retry fallback", async () => {
+test("local mock mode answers without server model configuration", async () => {
   const originalProvider = process.env.QUESTMIND_PROVIDER;
   const originalKey = process.env.OPENROUTER_API_KEY;
   const originalModel = process.env.QUESTMIND_MODEL_RULES_SAGE;
@@ -251,9 +266,9 @@ test("provider failures produce a safe retry fallback", async () => {
     else process.env[key] = value;
   }
   const payload = JSON.parse(response.body);
-  assert.equal(response.statusCode, 503);
-  assert.equal(payload.fallback.provider, "fallback");
-  assert.match(payload.fallback.text, /couldn't verify|retry/i);
+  assert.equal(response.statusCode, 200);
+  assert.equal(payload.provider, "mock");
+  assert.match(payload.text, /cannot verify/i);
 });
 
 test("searches only through the server-side source adapter and normalizes results", async () => {

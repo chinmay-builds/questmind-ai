@@ -18,6 +18,8 @@ function modelEnvValue(alias, env) {
     env?.[`QUESTMIND_${suffix}_MODEL`],
     env?.[`OPENROUTER_MODEL_${suffix}`],
     env?.[`QUESTMIND_${suffix}`],
+    env?.QUESTMIND_MODEL,
+    env?.OPENROUTER_MODEL,
   ].find((value) => typeof value === "string" && value.trim())?.trim();
 }
 
@@ -30,12 +32,13 @@ function providerEnvValue(alias, env) {
 }
 
 export function modelConfigFromEnv(env = globalThis.process?.env) {
+  const provider = env?.QUESTMIND_PROVIDER?.trim() || (env?.OPENROUTER_API_KEY ? "openrouter" : "mock");
   return modelAliases.map(({ alias, label, description }) => ({
     alias,
     label,
     description,
-    provider: providerEnvValue(alias, env) || env?.QUESTMIND_PROVIDER?.trim() || (env?.OPENROUTER_API_KEY ? "openrouter" : "mock"),
-    configured: Boolean(modelEnvValue(alias, env)),
+    provider: providerEnvValue(alias, env) || provider,
+    configured: provider.toLowerCase() === "mock" || Boolean(modelEnvValue(alias, env)),
   }));
 }
 
