@@ -83,6 +83,12 @@ test("shared model configuration enables every alias without exposing the model 
     OPENROUTER_API_KEY: "secret",
     OPENROUTER_MODEL: "openrouter/free",
   });
+
+  test("OpenRouter key alone enables aliases through the documented free default", () => {
+    const env = { QUESTMIND_PROVIDER: "openrouter", OPENROUTER_API_KEY: "secret" };
+    assert.deepEqual(modelConfigFromEnv(env).map((model) => model.configured), [true, true, true, true]);
+    assert.equal(resolveModelAlias("rules-sage", env).model, "openrouter/free");
+  });
   assert.deepEqual(roster.map((model) => model.configured), [true, true, true, true]);
   assert.equal(roster[0].model, undefined);
   assert.equal(resolveModelAlias("lorekeeper", {
