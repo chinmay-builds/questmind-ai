@@ -7,6 +7,7 @@ import { providerNameFromEnv } from "../src/core/config.js";
 import { modelConfigFromEnv, resolveModelAlias } from "../src/core/config.js";
 import { getPlayerOptions } from "../src/games.js";
 import { getRuleContext } from "../src/rules.js";
+import { searchRuleSources } from "../src/core/search.js";
 import { createOpenRouterProvider } from "../src/core/providers/openrouter.js";
 import { InvalidQuestRequestError, ProviderConfigurationError, ProviderRequestError, UnsupportedProviderError } from "../src/core/errors.js";
 import askHandler from "../api/ask.js";
@@ -55,6 +56,7 @@ test("rejects malformed core requests", () => {
 test("requires an explicit supported provider", () => {
   assert.throws(() => createProvider("hosted-ai"), UnsupportedProviderError);
   assert.equal(createProvider("mock").name, "mock");
+  assert.equal(createProvider("mock", { modelAlias: "rules-sage", env: {} }).name, "mock");
   assert.equal(providerNameFromEnv({ QUESTMIND_PROVIDER: "mock" }), "mock");
   assert.equal(providerNameFromEnv({}), "mock");
   assert.equal(providerNameFromEnv({ OPENROUTER_API_KEY: "key" }), "openrouter");
@@ -75,6 +77,26 @@ test("resolves safe model aliases without exposing secrets", () => {
   assert.throws(() => resolveModelAlias("lorekeeper", env), ProviderConfigurationError);
 });
 
+test("shared model configuration enables every alias without exposing the model id", () => {
+  const roster = modelConfigFromEnv({
+    QUESTMIND_PROVIDER: "openrouter",
+    OPENROUTER_API_KEY: "secret",
+    OPENROUTER_MODEL: "openrouter/free",
+  });
+
+  test("OpenRouter key alone enables aliases through the documented free default", () => {
+    const env = { QUESTMIND_PROVIDER: "openrouter", OPENROUTER_API_KEY: "secret" };
+    assert.deepEqual(modelConfigFromEnv(env).map((model) => model.configured), [true, true, true, true]);
+    assert.equal(resolveModelAlias("rules-sage", env).model, "openrouter/free");
+  });
+  assert.deepEqual(roster.map((model) => model.configured), [true, true, true, true]);
+  assert.equal(roster[0].model, undefined);
+  assert.equal(resolveModelAlias("lorekeeper", {
+    OPENROUTER_API_KEY: "secret",
+    OPENROUTER_MODEL: "openrouter/free",
+  }).model, "openrouter/free");
+});
+
 test("enforces game and mode-specific player bounds", () => {
   assert.deepEqual(getPlayerOptions({ playerOptions: [1, 2, 3, 4] }, "Solo / Clockwork"), [1]);
   assert.deepEqual(getPlayerOptions({ playerOptions: [2, 3, 4] }, "Two-player"), [2]);
@@ -93,6 +115,22 @@ test("includes honest rule context in provider requests and evidence", async () 
   });
   const result = await provider.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" });
   assert.equal(result.evidence, "Rulebook context not provided.");
+});
+
+test("uses official provenance for the narrow Scythe Automa starter context", async () => {
+  const context = getRuleContext("Scythe", "Automa");
+  assert.match(context.summary, /official solo opponent/);
+  assert.equal(context.source.url, "https://stonemaiergames.com/games/scythe/scythe-rules/");
+  const provider = createOpenRouterProvider({
+    apiKey: "secret",
+    fetchImpl: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      assert.match(body.messages[1].content, /stonemaiergames\.com\/games\/scythe\/scythe-rules/);
+      return new Response(JSON.stringify({ choices: [{ message: { content: "ANSWER: I need the Automa card or rulebook page to verify this.\nEVIDENCE: Stonemaier Games, Scythe Rules." } }] }), { status: 200 });
+    },
+  });
+  const result = await provider.answer({ game: "Scythe", mode: "Automa", playerCount: 2, question: "What does this Automa card do?" });
+  assert.match(result.evidence, /Stonemaier Games/);
 });
 
 test("normalizes an OpenRouter response and sends context without exposing browser code", async () => {
@@ -216,7 +254,7 @@ test("model roster is safe and marks missing server aliases unavailable", async 
   assert.equal(roster.find((model) => model.alias === "rules-sage").model, undefined);
 });
 
-test("provider failures produce a safe retry fallback", async () => {
+test("local mock mode answers without server model configuration", async () => {
   const originalProvider = process.env.QUESTMIND_PROVIDER;
   const originalKey = process.env.OPENROUTER_API_KEY;
   const originalModel = process.env.QUESTMIND_MODEL_RULES_SAGE;
@@ -234,9 +272,33 @@ test("provider failures produce a safe retry fallback", async () => {
     else process.env[key] = value;
   }
   const payload = JSON.parse(response.body);
-  assert.equal(response.statusCode, 503);
-  assert.equal(payload.fallback.provider, "fallback");
-  assert.match(payload.fallback.text, /couldn't verify|retry/i);
+  assert.equal(response.statusCode, 200);
+  assert.equal(payload.provider, "mock");
+  assert.match(payload.text, /cannot verify/i);
+});
+
+test("searches only through the server-side source adapter and normalizes results", async () => {
+  let requestedUrl;
+  const result = await searchRuleSources("Scythe Automa official rules", {
+    apiKey: "search-secret",
+    fetchImpl: async (url, options) => {
+      requestedUrl = String(url);
+      assert.equal(options.headers["X-Subscription-Token"], "search-secret");
+      return new Response(JSON.stringify({
+        web: { results: [
+          { title: "Official rules", url: "https://example.com/rules", description: "Verified excerpt." },
+          { title: "Ignored", url: "javascript:alert(1)", description: "Unsafe." },
+        ] },
+      }), { status: 200 });
+    },
+  });
+  assert.match(requestedUrl, /q=Scythe\+Automa\+official\+rules/);
+  assert.equal(result.results.length, 1);
+  assert.equal(result.results[0].url, "https://example.com/rules");
+});
+
+test("does not claim a web search when search is unconfigured", async () => {
+  assert.deepEqual(await searchRuleSources("Catan rules", { env: {} }), { attempted: false, results: [] });
 });
 
 function createTestResponse() {

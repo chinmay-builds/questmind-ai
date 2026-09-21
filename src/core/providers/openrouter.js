@@ -44,7 +44,14 @@ function extractAssistantText(payload) {
       .filter(Boolean)
       .join("\n");
   }
+
   return "";
+}
+
+function searchText(request) {
+  if (!request.searchContext.attempted) return "Real-time search was not configured or not run.";
+  if (!request.searchContext.results.length) return "Real-time search returned no usable sources. Do not guess.";
+  return request.searchContext.results.map((result, index) => `${index + 1}. ${result.title} — ${result.url}\n${result.snippet}`).join("\n");
 }
 
 export function createOpenRouterProvider(options = {}) {
@@ -77,7 +84,7 @@ export function createOpenRouterProvider(options = {}) {
                 plugins: request.webSearch === false ? undefined : [{ id: "web", max_results: 5 }],
                 messages: [
                   { role: "system", content: "You are QuestMind, a concise and grounded board-game companion. Answer only the user's exact question in plain language, usually in 1-3 short sentences. Use the supplied game, mode, player count, rule text, and image context first. Do not add tangents, strategy advice, or unrelated rules. Never invent citations, URLs, browsing, or certainty. If the supplied context is insufficient to verify the answer, say so plainly and ask for the relevant rulebook page, rule text, or clearer image. Return exactly two labeled lines: ANSWER: <concise answer or inability to verify> and EVIDENCE: <relevant supplied rule section/source, or 'Not provided — please share the relevant rulebook page, rule text, or image.'>." },
-                  { role: "user", content: `${messageContent(request)}\nVerified context: ${request.ruleContext.summary}\nEvidence label: ${request.ruleContext.evidence}` },
+                  { role: "user", content: `${messageContent(request)}\nVerified context: ${request.ruleContext.summary}\nEvidence label: ${request.ruleContext.evidence}\nSource: ${request.ruleContext.source?.url ?? "No source loaded."}\nSearch sources (use only these URLs; do not claim browsing beyond them):\n${searchText(request)}` },
                 ],
               }),
             });

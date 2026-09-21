@@ -59,6 +59,16 @@ server resolves the real model name and never returns it or an API key.
 `GET /api/models` exposes only labels, provider names, and availability so the
 UI can mark missing aliases as unavailable.
 
+When `BRAVE_SEARCH_API_KEY` is configured on Vercel, `/api/ask` performs a
+server-side Brave Web Search for the selected game, mode, and question. Only
+the returned title, URL, and snippet are sent to the model; the key never
+reaches the browser. Without that key, QuestMind explicitly tells the model
+that real-time search was not run and will not invent a source.
+
+The companion selector is available in both the table context panel and the
+chat top rail, including narrow mobile layouts. A selected alias is only a
+safe identifier; its configured provider/model remains server-side.
+
 ### OpenRouter provider
 
 The first real provider is server-side OpenRouter. It is not imported by the
@@ -125,8 +135,17 @@ as HTML.
 ## Rulebook coverage
 
 `src/rules.js` is the shared game/mode catalog. Every one of the 20 games and
-every listed mode has a context record and an evidence label, but the starter
-catalog intentionally contains no invented rule text. Until verified material
-is supplied, QuestMind says that the answer cannot be verified and asks for a
-rulebook page, rule text, or clearer image. Player bounds are validated from
-the same catalog, including solo and two-player mode adjustments.
+every listed mode has a context record, an evidence label, and an optional
+source URL. The catalog intentionally contains no invented rule text. The
+Scythe / Automa entry includes a narrow, verified starter note and links to
+Stonemaier Games' official rules page:
+
+<https://stonemaiergames.com/games/scythe/scythe-rules/>
+
+That source link does not mean the complete Automa deck logic is embedded:
+turn-by-turn actions, cards, and edge cases remain unavailable until the
+relevant official rulebook pages are supplied and transcribed into the
+catalog. For every other unpopulated context, QuestMind says the answer
+cannot be verified and asks for a rulebook page, rule text, or clearer image.
+Player bounds are validated from the same catalog, including solo and
+two-player mode adjustments.

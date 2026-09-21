@@ -24,6 +24,9 @@ button, select { cursor: pointer; }
 .topbar-note, .stamp, .field-label, .panel-number, .chat-count, .footer-note, .helper-text, .coming-soon, .message-meta { font-family: "DM Mono", monospace; letter-spacing: .06em; }
 .topbar-note { font-size: 10px; color: var(--muted); }
 .topbar-actions { display: flex; align-items: center; gap: 22px; }
+.topbar-model { display: none; align-items: center; gap: 7px; color: var(--muted); font: 9px "DM Mono", monospace; letter-spacing: .06em; }
+.topbar-model select { min-width: 126px; border: 1px solid var(--ink); padding: 7px 24px 7px 8px; color: var(--ink); background: var(--white); font: 10px "DM Mono", monospace; }
+body.is-chat .topbar-model { display: inline-flex; }
 .topbar-cta { display: inline-flex; align-items: center; gap: 10px; color: var(--white); background: var(--blue); border: 2px solid var(--ink); padding: 9px 12px; font: 10px "DM Mono", monospace; letter-spacing: .06em; text-decoration: none; box-shadow: 3px 3px 0 var(--ink); }
 .topbar-cta:hover { background: var(--red); }
 .topbar-cta span, .hero-cta span { font-size: 16px; line-height: 10px; }
@@ -82,6 +85,7 @@ h1 em { color: var(--blue); font-style: normal; }
 .panel-number { color: var(--red); font-size: 11px; }
 .field-label { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; margin: 0 0 8px; }
 .select-control { width: 100%; appearance: none; border: 2px solid var(--ink); padding: 12px 38px 12px 12px; margin-bottom: 22px; color: var(--ink); background: var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='m1 1 4 4 4-4' fill='none' stroke='%2317211e' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 14px center; }
+.model-select { display: block; min-height: 45px; font-weight: 600; border-color: var(--blue); box-shadow: 3px 3px 0 var(--ink); }
 .player-field { border: 0; padding: 0; margin: 0 0 26px; }
 .player-options { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
 .player-option input { position: absolute; opacity: 0; }
@@ -101,7 +105,7 @@ h1 em { color: var(--blue); font-style: normal; }
 .context-readout span { display: block; color: var(--muted); font: 9px "DM Mono", monospace; letter-spacing: .08em; margin-bottom: 7px; }
 .context-readout strong { font-size: 13px; line-height: 1.4; }
 .chat-panel { min-width: 0; display: flex; flex-direction: column; min-height: 530px; }
-.chat-header { padding: 27px clamp(20px, 3vw, 38px) 21px; border-bottom: 1px solid var(--line); margin: 0; }
+.chat-header { position: sticky; top: 0; z-index: 3; padding: 27px clamp(20px, 3vw, 38px) 21px; border-bottom: 1px solid var(--line); margin: 0; background: var(--white); }
 .chat-count { color: var(--muted); font-size: 9px; }
 .message-stream { flex: 1; padding: 27px clamp(20px, 3vw, 38px); min-height: 265px; max-height: 460px; overflow: auto; }
 .message { max-width: 74%; margin-bottom: 23px; animation: rise .3s ease-out both; }
@@ -139,6 +143,9 @@ textarea:focus { outline: 3px solid var(--blue); }
   .app-shell { padding: 18px 15px; }
   .topbar-actions { gap: 0; }
   .topbar-note { display: none; }
+  .topbar-model { gap: 4px; }
+  .topbar-model span { display: none; }
+  .topbar-model select { min-width: 112px; padding: 7px 20px 7px 6px; font-size: 9px; }
   .topbar-cta { padding: 8px 9px; font-size: 9px; }
   .chat-intro { display: block; padding: 55px 0 38px; }
   .landing-hero { display: block; min-height: 0; padding: 65px 0 74px; }
