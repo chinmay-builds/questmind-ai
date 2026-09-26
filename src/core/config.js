@@ -1,5 +1,7 @@
 import { ProviderConfigurationError } from "./errors.js";
 
+export const DEFAULT_MODEL = "openrouter/free";
+
 export const modelAliases = [
   { alias: "rules-sage", label: "Rules Sage", description: "Plain-language rules and edge cases" },
   { alias: "strategy-coach", label: "Strategy Coach", description: "Turn planning and trade-offs" },
@@ -13,11 +15,22 @@ function envKey(alias, prefix) {
 
 function modelEnvValue(alias, env) {
   const suffix = alias.replaceAll("-", "_").toUpperCase();
-  return [
+  const explicit = [
     env?.[`QUESTMIND_MODEL_${suffix}`],
     env?.[`QUESTMIND_${suffix}_MODEL`],
     env?.[`OPENROUTER_MODEL_${suffix}`],
+    env?.[`OPENROUTER_${suffix}_MODEL`],
+    env?.QUESTMIND_MODEL,
+    env?.OPENROUTER_MODEL,
   ].find((value) => typeof value === "string" && value.trim())?.trim();
+
+  if (explicit) return explicit;
+
+  if (env?.OPENROUTER_API_KEY?.trim()) {
+    return DEFAULT_MODEL;
+  }
+
+  return undefined;
 }
 
 function providerEnvValue(alias, env) {

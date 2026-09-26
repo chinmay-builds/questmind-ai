@@ -11,6 +11,7 @@ import { createOpenRouterProvider } from "../src/core/providers/openrouter.js";
 import { InvalidQuestRequestError, ProviderConfigurationError, ProviderRequestError, UnsupportedProviderError } from "../src/core/errors.js";
 import askHandler from "../api/ask.js";
 import modelsHandler from "../api/models.js";
+import configHandler from "../api/config.js";
 import { normalizeAssistantResponse } from "../src/core/contracts.js";
 
 test("returns an explicitly marked placeholder answer", () => {
@@ -237,6 +238,51 @@ test("provider failures produce a safe retry fallback", async () => {
   assert.equal(response.statusCode, 503);
   assert.equal(payload.fallback.provider, "fallback");
   assert.match(payload.fallback.text, /couldn't verify|retry/i);
+});
+
+test("resolves default openrouter model when OPENROUTER_API_KEY is provided", () => {
+  const env = { OPENROUTER_API_KEY: "test-key" };
+  assert.equal(resolveModelAlias("rules-sage", env).model, "openrouter/free");
+  assert.equal(resolveModelAlias("rules-sage", env).provider, "openrouter");
+  assert.equal(resolveModelAlias("strategy-coach", env).model, "openrouter/free");
+  assert.equal(resolveModelAlias("tabletop-tactician", env).model, "openrouter/free");
+  assert.equal(resolveModelAlias("lorekeeper", env).model, "openrouter/free");
+  const roster = modelConfigFromEnv(env);
+  assert.equal(roster.every((m) => m.configured), true);
+});
+
+test("respects global OPENROUTER_MODEL and QUESTMIND_MODEL overrides", () => {
+  const env = { OPENROUTER_API_KEY: "test-key", OPENROUTER_MODEL: "google/gemini-2.0-flash-exp:free" };
+  assert.equal(resolveModelAlias("rules-sage", env).model, "google/gemini-2.0-flash-exp:free");
+  assert.equal(resolveModelAlias("lorekeeper", env).model, "google/gemini-2.0-flash-exp:free");
+
+  const specificEnv = {
+    OPENROUTER_API_KEY: "test-key",
+    OPENROUTER_MODEL: "google/gemini-2.0-flash-exp:free",
+    QUESTMIND_MODEL_LOREKEEPER: "custom/lore-model",
+  };
+  assert.equal(resolveModelAlias("rules-sage", specificEnv).model, "google/gemini-2.0-flash-exp:free");
+  assert.equal(resolveModelAlias("lorekeeper", specificEnv).model, "custom/lore-model");
+});
+
+test("config handler returns configured models and provider status", async () => {
+  const response = createTestResponse();
+  const originalKey = process.env.OPENROUTER_API_KEY;
+  const originalModel = process.env.OPENROUTER_MODEL;
+  process.env.OPENROUTER_API_KEY = "test-key";
+  process.env.OPENROUTER_MODEL = "custom/test-model";
+
+  await configHandler({ method: "GET" }, response);
+
+  if (originalKey === undefined) delete process.env.OPENROUTER_API_KEY;
+  else process.env.OPENROUTER_API_KEY = originalKey;
+  if (originalModel === undefined) delete process.env.OPENROUTER_MODEL;
+  else process.env.OPENROUTER_MODEL = originalModel;
+
+  assert.equal(response.statusCode, 200);
+  const data = JSON.parse(response.body);
+  assert.equal(data.configured, true);
+  assert.ok(data.models.includes("custom/test-model"));
 });
 
 function createTestResponse() {
