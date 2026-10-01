@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QuestMind — Table-side AI Game Companion</title>
+    <title>QuestMind — Table-side AI Game Companion & Tabletop News</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
@@ -20,13 +20,16 @@
         </div>
       </div>
       <div class="topbar-actions">
+        <a class="route-link nav-btn" href="#feed" data-route="feed" id="topbar-feed-btn">
+          📰 NEWS FEED
+        </a>
         <button type="button" class="btn-history" id="history-toggle" aria-label="Toggle chat history">
-          <span>📜 HISTORY</span>
+          📜 HISTORY
         </button>
         <button type="button" class="btn-auth" id="auth-button">
-          <span>⚡ SIGN IN</span>
+          ⚡ SIGN IN
         </button>
-        <a class="route-link" id="topbar-route" href="#chat" data-route="chat">
+        <a class="route-link nav-btn btn-enter" id="topbar-route" href="#chat" data-route="chat">
           ENTER QUESTMIND <span>↗</span>
         </a>
       </div>
@@ -34,16 +37,19 @@
 
     <main class="viewport">
       <!-- LANDING VIEW -->
-      <section class="landing-view" id="landing-view">
+      <section class="view-section" id="landing-view">
         <div class="landing-hero">
           <div class="hero-tag">TABLETOP CO-PILOT · NEON CLOUD SYNC</div>
           <h1 class="hero-title">Your table-side companion for uninterrupted game night.</h1>
           <p class="hero-subtitle">
-            Grounded rules verification, tactical turn evaluations, and board state vision for over 20 top modern board games. Pick a companion persona, verify edge cases in seconds, and keep the game moving.
+            Grounded rules verification, tactical turn evaluations, and board state vision for over 20 top modern board games. Pick a companion persona, verify edge cases in seconds, and explore personalized tabletop news.
           </p>
           <div class="hero-actions">
             <a href="#chat" data-route="chat" class="btn-primary">
               LAUNCH TABLE COMPANION <span>→</span>
+            </a>
+            <a href="#feed" data-route="feed" class="btn-secondary">
+              📰 READ TABLETOP NEWS
             </a>
             <button type="button" class="btn-secondary" id="hero-auth-btn">
               ⚡ CONNECT NEON ACCOUNT
@@ -101,8 +107,34 @@
         </div>
       </section>
 
+      <!-- NEWS FEED VIEW -->
+      <section class="view-section" id="feed-view" hidden>
+        <div class="feed-header">
+          <div class="feed-badge">📰 TABLETOP NEWS & RELEASES</div>
+          <h2 class="feed-title">Kid-Friendly Board Game News & Expansions</h2>
+          <p class="feed-subtitle" id="feed-subtitle">
+            Personalized based on your game night companion discussions. Explore new expansions, world tournaments, and family releases.
+          </p>
+          <div class="feed-filter-bar" id="feed-filter-bar">
+            <button type="button" class="feed-filter is-active" data-filter="all">All News</button>
+            <button type="button" class="feed-filter" data-filter="discussed">🎯 Discussed in Chat</button>
+            <button type="button" class="feed-filter" data-filter="Catan">Catan</button>
+            <button type="button" class="feed-filter" data-filter="Wingspan">Wingspan</button>
+            <button type="button" class="feed-filter" data-filter="Scythe">Scythe</button>
+            <button type="button" class="feed-filter" data-filter="Everdell">Everdell</button>
+            <button type="button" class="feed-filter" data-filter="Root">Root</button>
+            <button type="button" class="feed-filter" data-filter="Ticket to Ride">Ticket to Ride</button>
+            <button type="button" class="feed-filter" data-filter="Azul">Azul</button>
+          </div>
+        </div>
+
+        <div class="news-grid" id="news-grid">
+          <!-- News Cards rendered dynamically via news.js -->
+        </div>
+      </section>
+
       <!-- CHAT / COMPANION VIEW -->
-      <section class="chat-view" id="chat-view" hidden>
+      <section class="view-section chat-view" id="chat-view" hidden>
         <aside class="sidebar">
           <div class="sidebar-block">
             <label for="game-select" class="field-label">BOARD GAME</label>
@@ -221,13 +253,13 @@
           <button type="button" class="auth-tab" data-auth-mode="signUp">Create Account</button>
         </div>
 
-        <!-- GOOGLE OAUTH TAB -->
-        <div id="tab-google" class="auth-tab-content">
+        <!-- GOOGLE OAUTH TAB CONTAINER -->
+        <div id="tab-google" class="auth-tab-panel">
           <p class="auth-description">
-            Sign in with your Google account. Your tabletop match history, rule bookmarks, and companion sessions are automatically synchronized to your Neon PostgreSQL database.
+            Sign in instantly with your Google account. Your tabletop match history, rule bookmarks, and companion sessions are automatically synchronized to your Neon PostgreSQL database.
           </p>
           <button type="button" class="btn-google-oauth" id="btn-google-signin">
-            <svg width="18" height="18" viewBox="0 0 24 24">
+            <svg width="20" height="20" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M21.35 12.23c0-.73-.07-1.43-.2-2.1H12v3.98h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.7 2.91-4.2 2.91-7.27Z" />
               <path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.6Z" />
               <path fill="#FBBC05" d="M6.54 13.7A5.86 5.86 0 0 1 6.23 12c0-.59.1-1.17.31-1.7V7.77H3.3A9.73 9.73 0 0 0 2.27 12c0 1.57.38 3.06 1.03 4.23l3.24-2.53Z" />
@@ -237,25 +269,42 @@
           </button>
         </div>
 
-        <!-- EMAIL SIGN IN / SIGN UP FORM -->
-        <form id="auth-form" class="auth-form" hidden>
-          <div class="form-group" id="group-name" hidden>
-            <label for="auth-name" class="field-label">PLAYER / CAPTAIN NAME</label>
-            <input type="text" id="auth-name" class="auth-input" placeholder="e.g. Alex" />
+        <!-- EMAIL SIGN IN TAB CONTAINER -->
+        <form id="tab-signin" class="auth-tab-panel auth-form" hidden>
+          <div class="form-group">
+            <label for="signin-email" class="field-label">EMAIL ADDRESS</label>
+            <input type="email" id="signin-email" class="auth-input" placeholder="player@tabletop.dev" required />
           </div>
 
           <div class="form-group">
-            <label for="auth-email" class="field-label">EMAIL ADDRESS</label>
-            <input type="email" id="auth-email" class="auth-input" placeholder="player@tabletop.dev" required />
+            <label for="signin-password" class="field-label">PASSWORD</label>
+            <input type="password" id="signin-password" class="auth-input" placeholder="••••••••" minlength="6" required />
+          </div>
+
+          <button type="submit" class="btn-auth-submit" id="btn-signin-submit">
+            ⚡ SIGN IN TO QUESTMIND
+          </button>
+        </form>
+
+        <!-- EMAIL SIGN UP TAB CONTAINER -->
+        <form id="tab-signup" class="auth-tab-panel auth-form" hidden>
+          <div class="form-group">
+            <label for="signup-name" class="field-label">PLAYER / CAPTAIN NAME</label>
+            <input type="text" id="signup-name" class="auth-input" placeholder="e.g. Captain Nemo" required />
           </div>
 
           <div class="form-group">
-            <label for="auth-password" class="field-label">PASSWORD</label>
-            <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" minlength="6" required />
+            <label for="signup-email" class="field-label">EMAIL ADDRESS</label>
+            <input type="email" id="signup-email" class="auth-input" placeholder="player@tabletop.dev" required />
           </div>
 
-          <button type="submit" class="btn-auth-submit" id="btn-auth-submit">
-            ⚡ SIGN IN
+          <div class="form-group">
+            <label for="signup-password" class="field-label">PASSWORD (MIN 6 CHARACTERS)</label>
+            <input type="password" id="signup-password" class="auth-input" placeholder="••••••••" minlength="6" required />
+          </div>
+
+          <button type="submit" class="btn-auth-submit" id="btn-signup-submit">
+            ⚡ CREATE CAPTAIN ACCOUNT
           </button>
         </form>
 

@@ -11,6 +11,7 @@ import {
   signOut,
 } from "./auth.js";
 import { saveGameSession, loadUserSessions } from "./history.js";
+import { boardGameNews, getPersonalizedNews } from "./news.js";
 
 const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
@@ -28,10 +29,17 @@ const attachButton = document.querySelector("#attach-button");
 const attachmentStrip = document.querySelector("#attachment-strip");
 const composerNote = document.querySelector("#composer-note");
 const landingView = document.querySelector("#landing-view");
+const feedView = document.querySelector("#feed-view");
 const chatView = document.querySelector("#chat-view");
 const routeLinks = document.querySelectorAll("[data-route]");
 const topbarRoute = document.querySelector("#topbar-route");
+const topbarFeedBtn = document.querySelector("#topbar-feed-btn");
 const syncIndicator = document.querySelector("#sync-indicator");
+
+// News Feed Elements
+const newsGrid = document.querySelector("#news-grid");
+const feedFilterBar = document.querySelector("#feed-filter-bar");
+const feedSubtitle = document.querySelector("#feed-subtitle");
 
 // Auth Elements
 const authModal = document.querySelector("#auth-modal");
@@ -41,13 +49,16 @@ const authClose = document.querySelector("#auth-close");
 const authAlert = document.querySelector("#auth-alert");
 const authTabs = document.querySelectorAll(".auth-tab");
 const tabGoogle = document.querySelector("#tab-google");
-const authForm = document.querySelector("#auth-form");
+const tabSignin = document.querySelector("#tab-signin");
+const tabSignup = document.querySelector("#tab-signup");
 const authProfile = document.querySelector("#auth-profile");
-const groupName = document.querySelector("#group-name");
-const authName = document.querySelector("#auth-name");
-const authEmail = document.querySelector("#auth-email");
-const authPassword = document.querySelector("#auth-password");
-const btnAuthSubmit = document.querySelector("#btn-auth-submit");
+const signinEmail = document.querySelector("#signin-email");
+const signinPassword = document.querySelector("#signin-password");
+const signupName = document.querySelector("#signup-name");
+const signupEmail = document.querySelector("#signup-email");
+const signupPassword = document.querySelector("#signup-password");
+const btnSigninSubmit = document.querySelector("#btn-signin-submit");
+const btnSignupSubmit = document.querySelector("#btn-signup-submit");
 const btnGoogleSignin = document.querySelector("#btn-google-signin");
 const btnSignout = document.querySelector("#btn-signout");
 const btnReturn = document.querySelector("#btn-return");
@@ -64,25 +75,49 @@ let messageCount = 1;
 let currentChatHistory = [];
 let activeUser = null;
 let currentAuthMode = "google";
+let currentFeedFilter = "all";
 let useServerProvider = true;
 let modelRoster = new Map();
 
 function showRoute() {
-  const isChat = window.location.hash === "#chat";
-  landingView.hidden = isChat;
+  const hash = window.location.hash;
+  const isChat = hash === "#chat";
+  const isFeed = hash === "#feed";
+  const isHome = !isChat && !isFeed;
+
+  landingView.hidden = !isHome;
+  feedView.hidden = !isFeed;
   chatView.hidden = !isChat;
+
   document.body.classList.toggle("is-chat", isChat);
-  document.title = isChat ? "QuestMind — Table-side companion" : "QuestMind — Your table-side co-pilot";
-  topbarRoute.href = isChat ? "/" : "#chat";
-  topbarRoute.dataset.route = isChat ? "home" : "chat";
-  topbarRoute.innerHTML = isChat ? "BACK TO HOME <span>↩</span>" : "ENTER QUESTMIND <span>↗</span>";
+  document.body.classList.toggle("is-feed", isFeed);
+
+  if (isChat) {
+    document.title = "QuestMind — Table-side Companion";
+    topbarRoute.href = "/";
+    topbarRoute.dataset.route = "home";
+    topbarRoute.innerHTML = "BACK TO HOME <span>↩</span>";
+  } else if (isFeed) {
+    document.title = "QuestMind — Tabletop News Feed";
+    topbarRoute.href = "#chat";
+    topbarRoute.dataset.route = "chat";
+    topbarRoute.innerHTML = "ENTER QUESTMIND <span>↗</span>";
+    renderNewsFeed();
+  } else {
+    document.title = "QuestMind — Your Table-side Co-pilot";
+    topbarRoute.href = "#chat";
+    topbarRoute.dataset.route = "chat";
+    topbarRoute.innerHTML = "ENTER QUESTMIND <span>↗</span>";
+  }
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 routeLinks.forEach((link) => link.addEventListener("click", (event) => {
   event.preventDefault();
-  if (link.dataset.route === "chat") history.pushState(null, "", "#chat");
-  if (link.dataset.route === "home") history.pushState(null, "", "/");
+  const route = link.dataset.route;
+  if (route === "chat") history.pushState(null, "", "#chat");
+  else if (route === "feed") history.pushState(null, "", "#feed");
+  else if (route === "home") history.pushState(null, "", "/");
   showRoute();
 }));
 window.addEventListener("hashchange", showRoute);
@@ -298,7 +333,71 @@ composer.addEventListener("submit", async (event) => {
   }
 });
 
-// ── AUTH & SESSION LOGIC ──
+// ── NEWS FEED RENDERING ──
+
+function renderNewsFeed() {
+  const news = getPersonalizedNews(currentChatHistory, gameSelect.value);
+  let filtered = news;
+
+  if (currentFeedFilter === "discussed") {
+    const mentionedGames = new Set(currentChatHistory.map((m) => (m.text || "").toLowerCase()));
+    filtered = news.filter((n) => mentionedGames.has(n.game.toLowerCase()) || n.game.toLowerCase() === gameSelect.value.toLowerCase());
+    if (filtered.length === 0) filtered = news;
+  } else if (currentFeedFilter !== "all") {
+    filtered = news.filter((n) => n.game.toLowerCase() === currentFeedFilter.toLowerCase());
+  }
+
+  if (currentChatHistory.length > 0) {
+    feedSubtitle.textContent = `Personalized for your active session of ${gameSelect.value} and recent companion questions.`;
+  } else {
+    feedSubtitle.textContent = "Kid-friendly, exciting board game announcements, expansions, and publisher highlights.";
+  }
+
+  newsGrid.replaceChildren();
+
+  filtered.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "news-card";
+    card.innerHTML = `
+      <div class="news-card-publisher">
+        <div class="publisher-info">
+          <span class="publisher-logo">${item.publisherLogo}</span>
+          <span class="publisher-name">${item.publisher}</span>
+        </div>
+        <span class="publisher-domain">${item.sourceDomain}</span>
+      </div>
+      <div class="news-card-media">
+        <img src="${item.imageUrl}" alt="${item.title}" loading="lazy" />
+        <span class="news-tag-pill">${item.tag}</span>
+      </div>
+      <div class="news-card-body">
+        <h3 class="news-card-title">${item.title}</h3>
+        <p class="news-card-summary">${item.summary}</p>
+        <div class="news-card-footer">
+          <div class="news-meta-left">
+            <span class="news-game-tag">${item.game}</span>
+            <span class="news-date">${item.date}</span>
+          </div>
+          <a href="${item.sourceUrl}" target="_blank" rel="noopener noreferrer" class="btn-read-source">
+            VISIT ${item.sourceDomain.toUpperCase()} <span>↗</span>
+          </a>
+        </div>
+      </div>
+    `;
+    newsGrid.append(card);
+  });
+}
+
+feedFilterBar?.querySelectorAll(".feed-filter").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    feedFilterBar.querySelectorAll(".feed-filter").forEach((b) => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    currentFeedFilter = btn.dataset.filter;
+    renderNewsFeed();
+  });
+});
+
+// ── AUTH & MODAL LOGIC ──
 
 function setAuthAlert(msg) {
   if (msg) {
@@ -331,7 +430,8 @@ function renderAuthModal() {
   setAuthAlert("");
   if (activeUser) {
     tabGoogle.hidden = true;
-    authForm.hidden = true;
+    tabSignin.hidden = true;
+    tabSignup.hidden = true;
     document.querySelector("#auth-tabs").hidden = true;
     authProfile.hidden = false;
     profileName.textContent = activeUser.name || "Player";
@@ -342,15 +442,9 @@ function renderAuthModal() {
     document.querySelector("#auth-tabs").hidden = false;
     authTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.authMode === currentAuthMode));
 
-    if (currentAuthMode === "google") {
-      tabGoogle.hidden = false;
-      authForm.hidden = true;
-    } else {
-      tabGoogle.hidden = true;
-      authForm.hidden = false;
-      groupName.hidden = currentAuthMode !== "signUp";
-      btnAuthSubmit.textContent = currentAuthMode === "signUp" ? "⚡ CREATE ACCOUNT" : "⚡ SIGN IN";
-    }
+    tabGoogle.hidden = currentAuthMode !== "google";
+    tabSignin.hidden = currentAuthMode !== "signIn";
+    tabSignup.hidden = currentAuthMode !== "signUp";
   }
 }
 
@@ -389,35 +483,47 @@ btnGoogleSignin?.addEventListener("click", async () => {
   }
 });
 
-authForm?.addEventListener("submit", async (e) => {
+// EMAIL SIGN IN FORM
+tabSignin?.addEventListener("submit", async (e) => {
   e.preventDefault();
   setAuthAlert("");
-  btnAuthSubmit.disabled = true;
-  btnAuthSubmit.textContent = "CONNECTING…";
+  btnSigninSubmit.disabled = true;
+  btnSigninSubmit.textContent = "VERIFYING…";
 
-  const email = authEmail.value.trim();
-  const password = authPassword.value;
-  const name = authName.value.trim();
+  const email = signinEmail.value.trim();
+  const password = signinPassword.value;
 
-  if (currentAuthMode === "signUp") {
-    const res = await signUpWithEmail(name, email, password);
-    if (res.success && res.user) {
-      updateAuthState(res.user);
-      closeAuthModal();
-    } else {
-      setAuthAlert(res.error || "Failed to create account.");
-    }
+  const res = await signInWithEmail(email, password);
+  if (res.success && res.user) {
+    updateAuthState(res.user);
+    closeAuthModal();
   } else {
-    const res = await signInWithEmail(email, password);
-    if (res.success && res.user) {
-      updateAuthState(res.user);
-      closeAuthModal();
-    } else {
-      setAuthAlert(res.error || "Invalid email or password.");
-    }
+    setAuthAlert(res.error || "No account found with this email. Please create an account first.");
   }
-  btnAuthSubmit.disabled = false;
-  btnAuthSubmit.textContent = currentAuthMode === "signUp" ? "⚡ CREATE ACCOUNT" : "⚡ SIGN IN";
+  btnSigninSubmit.disabled = false;
+  btnSigninSubmit.textContent = "⚡ SIGN IN TO QUESTMIND";
+});
+
+// EMAIL SIGN UP FORM
+tabSignup?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  setAuthAlert("");
+  btnSignupSubmit.disabled = true;
+  btnSignupSubmit.textContent = "CREATING…";
+
+  const name = signupName.value.trim();
+  const email = signupEmail.value.trim();
+  const password = signupPassword.value;
+
+  const res = await signUpWithEmail(name, email, password);
+  if (res.success && res.user) {
+    updateAuthState(res.user);
+    closeAuthModal();
+  } else {
+    setAuthAlert(res.error || "An account with this email already exists. Please sign in instead.");
+  }
+  btnSignupSubmit.disabled = false;
+  btnSignupSubmit.textContent = "⚡ CREATE CAPTAIN ACCOUNT";
 });
 
 btnSignout?.addEventListener("click", async () => {

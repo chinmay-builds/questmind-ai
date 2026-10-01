@@ -423,6 +423,22 @@ test("sessionsHandler handles offline mode gracefully without crashing", async (
   assert.equal(data.success, true);
 });
 
+test("getPersonalizedNews returns kid-appropriate articles prioritized by chat history", async () => {
+  const { getPersonalizedNews, boardGameNews } = await import("../src/news.js");
+  assert.ok(boardGameNews.length >= 10);
+  assert.ok(boardGameNews.every((item) => item.title && item.publisher && item.sourceDomain && item.sourceUrl));
+
+  // Personalized test: discuss Wingspan in chat
+  const history = [
+    { kind: "user", text: "How do brown powers work in Wingspan?" },
+    { kind: "assistant", text: "In Wingspan, brown powers activate from right to left." },
+  ];
+  const personalized = getPersonalizedNews(history, "Wingspan");
+  assert.equal(personalized[0].game, "Wingspan");
+  assert.match(personalized[0].publisher, /Stonemaier/i);
+  assert.equal(personalized[0].sourceDomain, "stonemaiergames.com");
+});
+
 function createTestResponse() {
   return {
     statusCode: 200,
