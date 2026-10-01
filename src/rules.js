@@ -33,6 +33,54 @@ const catalog = new Map(games.flatMap((game) => game.modes.map((mode) => [
   },
 ])));
 
+export const gameRuleDetails = {
+  "Catan": {
+    winCondition: "First player to reach 10 Victory Points (from settlements, cities, longest road, largest army, and victory point development cards) on their turn wins.",
+    turnStructure: "Turn structure: 1) Roll 2 dice for resource production (on 7, robber activates and players with 8+ cards discard half). 2) Trade resources with players or maritime/harbor trades. 3) Build roads, settlements, cities, or development cards.",
+    buildingRules: "Roads cost 1 Brick + 1 Wood and must connect to your existing network. Settlements cost 1 Brick + 1 Wood + 1 Wool + 1 Grain and must be on an intersection connected to your road, at least 2 road edges away from any other settlement/city (Distance Rule). Cities cost 3 Ore + 2 Grain and upgrade an existing settlement.",
+    combatRules: "No direct combat. The Knight card moves the Robber to any resource hex, blocks production, and steals 1 resource. 3 played Knights claim Largest Army (2 VP).",
+    strategyTip: "Secure diverse resource hexes with high probability numbers (6 and 8). Early access to Brick and Wood enables fast road network expansion to high-value ports.",
+  },
+  "Scythe": {
+    winCondition: "First player to place their 6th star on the Triumph Track triggers immediate game end. Scoring multiplies stars, controlled territories, and resource pairs by your final Popularity tier.",
+    turnStructure: "Select a different action column on your Player Mat. Execute the Top-Row Action (Move, Bolster, Trade, Produce) then optionally the Bottom-Row Action (Upgrade, Deploy Mech, Build, Enlist).",
+    buildingRules: "Build structures on territories with your workers to claim permanent player mat ongoing benefits and board control points.",
+    combatRules: "Combat starts when mechs/characters enter an enemy space. Players secretly bid Combat Power (up to 7) + 1 Combat Card per participating unit. Highest total wins.",
+    strategyTip: "Maintain high Popularity (13+ or 18+) to dramatically multiply end-game points. Chain top and bottom row actions on every turn.",
+  },
+  "Wingspan": {
+    winCondition: "After 4 rounds, score Victory Points from bird card values, bonus cards, end-of-round goals, cached food tokens, tucked cards, and laid eggs.",
+    turnStructure: "Take 1 of 4 actions: Play a Bird, Gain Food (Forest), Lay Eggs (Grasslands), or Draw Cards (Wetlands). Then trigger all brown-power birds in that row right-to-left.",
+    buildingRules: "Birds must be played in matching habitat rows from left to right, paying the listed food cost plus egg costs shown on the column header.",
+    combatRules: "Predator birds trigger hunting powers when activated, checking wingspan against drawn deck cards to cache food or tuck cards.",
+    strategyTip: "Build reliable food and egg production engines early in rounds 1-2 before pivoting to high-point birds and bonus card objectives.",
+  },
+  "Root": {
+    winCondition: "First player to reach 30 Victory Points wins immediately, or achieves an active Dominance card condition.",
+    turnStructure: "3 phases per turn: Birdsong, Daylight, Evening. Each faction runs completely asymmetric mechanics (Marquise wood economy, Eyrie decree programming, Alliance revolts, Vagabond quests).",
+    buildingRules: "Marquise builds in ruled clearings with free slots. Alliance spreads sympathy tokens without needing clearing rule.",
+    combatRules: "Roll two 12-sided dice (0-3). Attacker deals high roll in hits, defender deals low roll. Hits remove enemy warriors, then buildings/tokens.",
+    strategyTip: "Root is heavily interactive—keep the point leader in check by destroying key buildings or forcing the Eyrie into turmoil.",
+  },
+  "Gloomhaven": {
+    winCondition: "Achieve the scenario objective (usually defeat all enemies, survive X rounds, or loot/interact with target chest/altar tiles).",
+    turnStructure: "Play 2 ability cards secretly, act in initiative order using 1 Top action and 1 Bottom action. Rest when cards run out.",
+    buildingRules: "Follow scenario map layout for obstacles, traps, and doors. Flying units ignore terrain hazards.",
+    combatRules: "Attack value modified by drawn modifier deck vs target shield. Status ailments (Poison, Wound, Stun, Disarm) apply on hit.",
+    strategyTip: "Never burn loss cards in early rooms. Conserve hand stamina with short and long rests.",
+  },
+};
+
+export function getRuleDetails(gameName) {
+  return gameRuleDetails[gameName] ?? {
+    winCondition: `Score maximum Victory Points or satisfy the scenario win condition for ${gameName}.`,
+    turnStructure: `Follow the standard turn phases and player actions outlined in the official ${gameName} rulebook.`,
+    buildingRules: `Follow standard placement, component costs, and board boundaries for ${gameName}.`,
+    combatRules: `Resolve conflict and combat according to the official ${gameName} conflict rules.`,
+    strategyTip: `Focus on efficient action economy and scoring synergies in ${gameName}.`,
+  };
+}
+
 export function getRuleContext(gameName, mode) {
   return catalog.get(`${gameName}::${mode}`) ?? {
     game: gameName,

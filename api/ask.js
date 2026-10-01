@@ -36,14 +36,14 @@ export default async function handler(request, response) {
       sendJson(response, 400, { error: { code: "INVALID_REQUEST", message: "A JSON request body is required." } });
       return;
     }
-    const result = await askQuestMind(body, { provider: process.env.QUESTMIND_PROVIDER ?? "openrouter", env: process.env });
+    const result = await askQuestMind(body, { provider: process.env.QUESTMIND_PROVIDER, env: process.env });
     sendJson(response, 200, result);
   } catch (error) {
     if (error instanceof QuestMindError) {
       const status = error.code === "PROVIDER_CONFIGURATION_ERROR" ? 503 : error.code === "INVALID_REQUEST" ? 400 : 502;
       sendJson(response, status, {
         error: { code: error.code, message: error.message },
-        fallback: body && typeof body === "object" ? fallbackResponse(body, "The server configuration needs attention.") : undefined,
+        fallback: body && typeof body === "object" ? fallbackResponse(body, error.message) : undefined,
       });
       return;
     }

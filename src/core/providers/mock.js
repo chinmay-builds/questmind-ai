@@ -1,4 +1,5 @@
 import { normalizeAssistantResponse, validateQuestRequest } from "../contracts.js";
+import { getRuleDetails } from "../../rules.js";
 
 const GREETING_REGEX = /^(hi|hello|hey|yo|greetings|good\s+(morning|afternoon|evening)|howdy|sup|how\s+are\s+you|who\s+are\s+you|what\s+can\s+you\s+do|thanks|thank\s+you)\b/i;
 
@@ -9,6 +10,7 @@ export const mockProvider = {
   answer(input) {
     const request = validateQuestRequest(input);
     const q = request.question.trim();
+    const details = getRuleDetails(request.game);
     const attachmentNote = request.attachments.length
       ? ` I’ve queued ${request.attachments.length} attached image${request.attachments.length === 1 ? "" : "s"} for a future vision pass.`
       : "";
@@ -47,8 +49,28 @@ export const mockProvider = {
       };
     }
 
+    let answerText = `For ${request.game} · ${request.mode} · ${request.playerCount} ${request.playerCount === 1 ? "player" : "players"}: ${request.ruleContext.summary}`;
+    let evidenceText = request.ruleContext.evidence || `${request.game} Official Rules`;
+
+    if (/build|road|settlement|city|place|placement|deploy|structure|habitat/i.test(q)) {
+      answerText = `In ${request.game}: ${details.buildingRules}`;
+      evidenceText = `${request.game} Official Rules · Building & Placement`;
+    } else if (/win|score|points|victory|end game|winner/i.test(q)) {
+      answerText = `In ${request.game}: ${details.winCondition}`;
+      evidenceText = `${request.game} Official Rules · Victory & Scoring`;
+    } else if (/turn|phase|action|order|round|how to play|step/i.test(q)) {
+      answerText = `In ${request.game}: ${details.turnStructure}`;
+      evidenceText = `${request.game} Official Rules · Turn Structure`;
+    } else if (/combat|fight|attack|battle|power dial|conflict/i.test(q)) {
+      answerText = `In ${request.game}: ${details.combatRules}`;
+      evidenceText = `${request.game} Official Rules · Conflict & Combat`;
+    } else if (/strategy|tip|opening|next move|advice|trade-off/i.test(q)) {
+      answerText = `For ${request.game} (${request.mode} mode, ${request.playerCount} players): ${details.strategyTip}`;
+      evidenceText = `${request.game} Strategy Guide`;
+    }
+
     const normalized = normalizeAssistantResponse(
-      `ANSWER: For ${request.game} · ${request.mode} · ${request.playerCount} ${request.playerCount === 1 ? "player" : "players"}: Regarding “${q}”, verify your turn sequence and card effects according to ${request.game} core rules.${attachmentNote}\nEVIDENCE: ${request.ruleContext.evidence || `${request.game} Official Rules`}.`
+      `ANSWER: ${answerText}${attachmentNote}\nEVIDENCE: ${evidenceText}.`
     );
     return {
       text: normalized.answer,

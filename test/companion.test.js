@@ -207,18 +207,42 @@ test("aborts a slow OpenRouter request", async () => {
   await assert.rejects(() => provider.answer({ game: "Root", mode: "Solo / Clockwork", playerCount: 1, question: "Help" }), (error) => error.code === "PROVIDER_TIMEOUT");
 });
 
-test("API handler returns explicit config errors without an OpenRouter key", async () => {
+test("API handler returns explicit config errors when openrouter provider is requested without a key", async () => {
   const original = process.env.QUESTMIND_PROVIDER;
-  delete process.env.QUESTMIND_PROVIDER;
+  const originalKey = process.env.OPENROUTER_API_KEY;
+  process.env.QUESTMIND_PROVIDER = "openrouter";
+  delete process.env.OPENROUTER_API_KEY;
   const response = createTestResponse();
   await askHandler({
     method: "POST",
     headers: { "content-length": "80" },
     body: { game: "Catan", mode: "Standard", playerCount: 4, question: "Help" },
   }, response);
-  if (original) process.env.QUESTMIND_PROVIDER = original;
+  if (original === undefined) delete process.env.QUESTMIND_PROVIDER;
+  else process.env.QUESTMIND_PROVIDER = original;
+  if (originalKey === undefined) delete process.env.OPENROUTER_API_KEY;
+  else process.env.OPENROUTER_API_KEY = originalKey;
   assert.equal(response.statusCode, 503);
   assert.equal(JSON.parse(response.body).error.code, "PROVIDER_CONFIGURATION_ERROR");
+});
+
+test("API handler seamlessly answers using local rules when no external provider is configured", async () => {
+  const original = process.env.QUESTMIND_PROVIDER;
+  const originalKey = process.env.OPENROUTER_API_KEY;
+  delete process.env.QUESTMIND_PROVIDER;
+  delete process.env.OPENROUTER_API_KEY;
+  const response = createTestResponse();
+  await askHandler({
+    method: "POST",
+    headers: { "content-length": "80" },
+    body: { game: "Catan", mode: "Standard", playerCount: 4, question: "How do I build a road?" },
+  }, response);
+  if (original) process.env.QUESTMIND_PROVIDER = original;
+  if (originalKey) process.env.OPENROUTER_API_KEY = originalKey;
+  assert.equal(response.statusCode, 200);
+  const data = JSON.parse(response.body);
+  assert.match(data.text, /Catan|Road/i);
+  assert.equal(data.provider, "mock");
 });
 
 test("API handler rejects non-POST requests", async () => {
