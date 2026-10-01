@@ -1,7 +1,7 @@
 import { normalizeAssistantResponse, validateQuestRequest } from "../contracts.js";
 import { ProviderConfigurationError, ProviderRequestError } from "../errors.js";
+import { DEFAULT_MODEL, modelAliases, resolveModelAlias } from "../config.js";
 
-const DEFAULT_MODEL = "openrouter/free";
 const DEFAULT_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_TIMEOUT_MS = 20_000;
 const MAX_RETRIES = 1;
@@ -23,6 +23,7 @@ function readConfig(env = globalThis.process?.env, overrides = {}) {
     timeoutMs,
     endpoint: overrides.endpoint ?? DEFAULT_ENDPOINT,
     fetchImpl: overrides.fetchImpl ?? globalThis.fetch,
+    env,
   };
 }
 
@@ -83,6 +84,20 @@ export function createOpenRouterProvider(options = {}) {
     name: "openrouter",
     async answer(input) {
       const request = validateQuestRequest(input);
+      let resolvedModel = config.model;
+      if (request.model) {
+        const isAlias = modelAliases.some((m) => m.alias === request.model.toLowerCase());
+        if (isAlias) {
+          try {
+            resolvedModel = resolveModelAlias(request.model, config.env).model;
+          } catch {
+            resolvedModel = config.model;
+          }
+        } else {
+          resolvedModel = request.model;
+        }
+      }
+
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
       const headers = {
@@ -100,7 +115,7 @@ export function createOpenRouterProvider(options = {}) {
               headers,
               signal: controller.signal,
               body: JSON.stringify({
-                model: request.model || config.model,
+                model: resolvedModel,
                 plugins: request.webSearch === false ? undefined : [{ id: "web", max_results: 5 }],
                 messages: [
                   { role: "system", content: SYSTEM_PROMPT },

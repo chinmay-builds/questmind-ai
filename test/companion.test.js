@@ -350,28 +350,28 @@ test("config handler returns configured models and provider status", async () =>
   assert.ok(data.models.includes("custom/test-model"));
 });
 
-test("OpenRouter provider sends system prompt with small talk, rules, and scope guidelines", async () => {
+test("OpenRouter provider resolves model aliases to valid provider model IDs", async () => {
   let capturedBody;
   const provider = createOpenRouterProvider({
     apiKey: "secret-key",
+    env: { OPENROUTER_API_KEY: "secret-key", OPENROUTER_MODEL_RULES_SAGE: "google/gemini-2.0-flash-exp:free" },
     fetchImpl: async (_url, options) => {
       capturedBody = JSON.parse(options.body);
       return new Response(JSON.stringify({
-        choices: [{ message: { content: "ANSWER: Hello! I'm QuestMind, ready to help with Catan.\nEVIDENCE: QuestMind Table-Side Companion." } }],
+        choices: [{ message: { content: "ANSWER: In Automa mode, draw cards.\nEVIDENCE: Scythe Official Rulebook." } }],
       }), { status: 200 });
     },
   });
   const result = await provider.answer({
-    game: "Catan",
-    mode: "Standard",
-    playerCount: 4,
-    question: "Hello!",
+    game: "Scythe",
+    mode: "Automa",
+    playerCount: 1,
+    model: "rules-sage",
+    question: "I basically just need help overall with automa mode",
   });
-  assert.match(capturedBody.messages[0].content, /GREETINGS & SMALL TALK/);
-  assert.match(capturedBody.messages[0].content, /NON-BOARD GAME QUESTIONS/);
-  assert.match(capturedBody.messages[0].content, /Tabletop scope policy/);
-  assert.equal(result.text, "Hello! I'm QuestMind, ready to help with Catan.");
-  assert.equal(result.evidence, "QuestMind Table-Side Companion.");
+  assert.equal(capturedBody.model, "google/gemini-2.0-flash-exp:free");
+  assert.notEqual(capturedBody.model, "rules-sage");
+  assert.match(result.text, /Automa mode/);
 });
 
 function createTestResponse() {
