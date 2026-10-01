@@ -11,7 +11,12 @@ import {
   signOut,
 } from "./auth.js";
 import { saveGameSession, loadUserSessions } from "./history.js";
-import { boardGameNews, getPersonalizedNews } from "./news.js";
+import {
+  boardGameNews,
+  getPersonalizedNews,
+  getNewsPage,
+  TOTAL_AVAILABLE_NEWS,
+} from "./news.js";
 
 const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
@@ -40,6 +45,14 @@ const syncIndicator = document.querySelector("#sync-indicator");
 const newsGrid = document.querySelector("#news-grid");
 const feedFilterBar = document.querySelector("#feed-filter-bar");
 const feedSubtitle = document.querySelector("#feed-subtitle");
+const feedSearchInput = document.querySelector("#feed-search-input");
+const feedSearchClear = document.querySelector("#feed-search-clear");
+const feedStatsTotal = document.querySelector("#feed-stats-total");
+const feedStatsShowing = document.querySelector("#feed-stats-showing");
+const feedStatsPage = document.querySelector("#feed-stats-page");
+const btnLoadMore = document.querySelector("#btn-load-more");
+const btnRandomPage = document.querySelector("#btn-random-page");
+const btnTopPage = document.querySelector("#btn-top-page");
 
 // Auth Elements
 const authModal = document.querySelector("#auth-modal");
@@ -76,6 +89,10 @@ let currentChatHistory = [];
 let activeUser = null;
 let currentAuthMode = "google";
 let currentFeedFilter = "all";
+let feedCurrentPage = 1;
+const feedPageSize = 18;
+let feedSearchQuery = "";
+let feedLoadedItems = [];
 let useServerProvider = true;
 let modelRoster = new Map();
 
@@ -335,66 +352,127 @@ composer.addEventListener("submit", async (event) => {
 
 // ── NEWS FEED RENDERING ──
 
-function renderNewsFeed() {
-  const news = getPersonalizedNews(currentChatHistory, gameSelect.value);
-  let filtered = news;
+function createNewsCardElement(item) {
+  const card = document.createElement("article");
+  card.className = "news-card";
+  card.innerHTML = `
+    <div class="news-card-publisher">
+      <div class="publisher-info">
+        <span class="publisher-logo">${item.publisherLogo}</span>
+        <span class="publisher-name">${item.publisher}</span>
+      </div>
+      <span class="publisher-domain">${item.sourceDomain}</span>
+    </div>
+    <div class="news-card-media">
+      <img src="${item.imageUrl}" alt="${item.title}" loading="lazy" />
+      <span class="news-tag-pill">${item.tag}</span>
+    </div>
+    <div class="news-card-body">
+      <h3 class="news-card-title">${item.title}</h3>
+      <p class="news-card-summary">${item.summary}</p>
+      <div class="news-card-footer">
+        <div class="news-meta-left">
+          <span class="news-game-tag">${item.game}</span>
+          <span class="news-date">${item.date}</span>
+          <span class="news-rating-tag">${item.rating}</span>
+        </div>
+        <a href="${item.sourceUrl}" target="_blank" rel="noopener noreferrer" class="btn-read-source">
+          VISIT ${item.sourceDomain.toUpperCase()} <span>↗</span>
+        </a>
+      </div>
+    </div>
+  `;
+  return card;
+}
 
-  if (currentFeedFilter === "discussed") {
-    const mentionedGames = new Set(currentChatHistory.map((m) => (m.text || "").toLowerCase()));
-    filtered = news.filter((n) => mentionedGames.has(n.game.toLowerCase()) || n.game.toLowerCase() === gameSelect.value.toLowerCase());
-    if (filtered.length === 0) filtered = news;
-  } else if (currentFeedFilter !== "all") {
-    filtered = news.filter((n) => n.game.toLowerCase() === currentFeedFilter.toLowerCase());
+function renderNewsFeed(append = false) {
+  if (!append) {
+    feedLoadedItems = [];
+    newsGrid.replaceChildren();
   }
+
+  const pageResult = getNewsPage({
+    page: feedCurrentPage,
+    pageSize: feedPageSize,
+    filter: currentFeedFilter,
+    searchQuery: feedSearchQuery,
+    chatHistory: currentChatHistory,
+    activeGame: gameSelect.value,
+  });
+
+  feedLoadedItems = append ? [...feedLoadedItems, ...pageResult.items] : pageResult.items;
 
   if (currentChatHistory.length > 0) {
     feedSubtitle.textContent = `Personalized for your active session of ${gameSelect.value} and recent companion questions.`;
   } else {
-    feedSubtitle.textContent = "Kid-friendly, exciting board game announcements, expansions, and publisher highlights.";
+    feedSubtitle.textContent = `Kid-friendly, exciting board game announcements, expansions, and publisher highlights across 10,000,000+ procedural cards.`;
   }
 
-  newsGrid.replaceChildren();
+  if (pageResult.items.length === 0 && !append) {
+    newsGrid.innerHTML = `<div class="history-empty" style="grid-column: 1 / -1; text-align: center; padding: 40px; font-size: 15px;">No news cards found matching "${feedSearchQuery || currentFeedFilter}". Try another search or filter!</div>`;
+  } else {
+    pageResult.items.forEach((item) => {
+      newsGrid.append(createNewsCardElement(item));
+    });
+  }
 
-  filtered.forEach((item) => {
-    const card = document.createElement("article");
-    card.className = "news-card";
-    card.innerHTML = `
-      <div class="news-card-publisher">
-        <div class="publisher-info">
-          <span class="publisher-logo">${item.publisherLogo}</span>
-          <span class="publisher-name">${item.publisher}</span>
-        </div>
-        <span class="publisher-domain">${item.sourceDomain}</span>
-      </div>
-      <div class="news-card-media">
-        <img src="${item.imageUrl}" alt="${item.title}" loading="lazy" />
-        <span class="news-tag-pill">${item.tag}</span>
-      </div>
-      <div class="news-card-body">
-        <h3 class="news-card-title">${item.title}</h3>
-        <p class="news-card-summary">${item.summary}</p>
-        <div class="news-card-footer">
-          <div class="news-meta-left">
-            <span class="news-game-tag">${item.game}</span>
-            <span class="news-date">${item.date}</span>
-          </div>
-          <a href="${item.sourceUrl}" target="_blank" rel="noopener noreferrer" class="btn-read-source">
-            VISIT ${item.sourceDomain.toUpperCase()} <span>↗</span>
-          </a>
-        </div>
-      </div>
-    `;
-    newsGrid.append(card);
-  });
+  // Update Stats & Controls
+  if (feedStatsShowing) {
+    feedStatsShowing.textContent = `Showing ${feedLoadedItems.length} of ${pageResult.totalCount.toLocaleString()} cards`;
+  }
+  if (feedStatsPage) {
+    feedStatsPage.textContent = `Page ${pageResult.page.toLocaleString()} of ${pageResult.totalPages.toLocaleString()}`;
+  }
+  if (btnLoadMore) {
+    btnLoadMore.hidden = !pageResult.hasMore;
+    btnLoadMore.querySelector("span").textContent = `LOAD MORE NEWS (PAGE ${(pageResult.page + 1).toLocaleString()})`;
+  }
 }
+
+// Search input handling with debounce
+let searchDebounceTimer = null;
+feedSearchInput?.addEventListener("input", (e) => {
+  feedSearchQuery = e.target.value.trim();
+  if (feedSearchClear) feedSearchClear.hidden = !feedSearchQuery;
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    feedCurrentPage = 1;
+    renderNewsFeed(false);
+  }, 180);
+});
+
+feedSearchClear?.addEventListener("click", () => {
+  if (feedSearchInput) feedSearchInput.value = "";
+  feedSearchQuery = "";
+  feedSearchClear.hidden = true;
+  feedCurrentPage = 1;
+  renderNewsFeed(false);
+});
 
 feedFilterBar?.querySelectorAll(".feed-filter").forEach((btn) => {
   btn.addEventListener("click", () => {
     feedFilterBar.querySelectorAll(".feed-filter").forEach((b) => b.classList.remove("is-active"));
     btn.classList.add("is-active");
     currentFeedFilter = btn.dataset.filter;
-    renderNewsFeed();
+    feedCurrentPage = 1;
+    renderNewsFeed(false);
   });
+});
+
+btnLoadMore?.addEventListener("click", () => {
+  feedCurrentPage += 1;
+  renderNewsFeed(true);
+});
+
+btnRandomPage?.addEventListener("click", () => {
+  // Jump to a random page between 2 and 500,000 to demonstrate millions of cards
+  feedCurrentPage = Math.floor(Math.random() * 500000) + 2;
+  renderNewsFeed(false);
+  newsGrid.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+btnTopPage?.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
 // ── AUTH & MODAL LOGIC ──

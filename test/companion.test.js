@@ -439,6 +439,33 @@ test("getPersonalizedNews returns kid-appropriate articles prioritized by chat h
   assert.equal(personalized[0].sourceDomain, "stonemaiergames.com");
 });
 
+test("getNewsPage supports deep paging across 10,000,000+ cards with search and filters", async () => {
+  const { getNewsPage, TOTAL_AVAILABLE_NEWS } = await import("../src/news.js");
+  assert.equal(TOTAL_AVAILABLE_NEWS, 10_000_000);
+
+  // Test page 1
+  const page1 = getNewsPage({ page: 1, pageSize: 18 });
+  assert.equal(page1.items.length, 18);
+  assert.equal(page1.totalCount, 10_000_000);
+  assert.ok(page1.items.every((c) => c.publisherLogo && c.sourceDomain && c.imageUrl && c.title));
+
+  // Test deep page 42,000 (millions of cards)
+  const deepPage = getNewsPage({ page: 42000, pageSize: 18 });
+  assert.equal(deepPage.items.length, 18);
+  assert.equal(deepPage.page, 42000);
+  assert.ok(deepPage.items[0].title.length > 5);
+
+  // Test search filtering across procedural feed
+  const searchResult = getNewsPage({ page: 1, pageSize: 10, searchQuery: "tournament" });
+  assert.ok(searchResult.items.length > 0);
+  assert.ok(searchResult.items.every((c) => /tournament|championship|invitational/i.test(`${c.title} ${c.summary} ${c.tag}`)));
+
+  // Test category filtering
+  const expansionResult = getNewsPage({ page: 1, pageSize: 10, filter: "expansion" });
+  assert.ok(expansionResult.items.length > 0);
+  assert.ok(expansionResult.items.every((c) => c.category === "expansion"));
+});
+
 function createTestResponse() {
   return {
     statusCode: 200,

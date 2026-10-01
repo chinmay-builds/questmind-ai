@@ -110,14 +110,43 @@
       <!-- NEWS FEED VIEW -->
       <section class="view-section" id="feed-view" hidden>
         <div class="feed-header">
-          <div class="feed-badge">📰 TABLETOP NEWS & RELEASES</div>
+          <div class="feed-badge">📰 INFINITE TABLETOP NEWS & RELEASES</div>
           <h2 class="feed-title">Kid-Friendly Board Game News & Expansions</h2>
           <p class="feed-subtitle" id="feed-subtitle">
-            Personalized based on your game night companion discussions. Explore new expansions, world tournaments, and family releases.
+            Personalized based on your game night companion discussions. Explore over 10,000,000+ procedural news cards, expansions, tournaments, and family releases.
           </p>
+
+          <!-- LIVE SEARCH BAR -->
+          <div class="feed-search-container">
+            <div class="feed-search-row">
+              <span class="feed-search-icon">🔍</span>
+              <input
+                type="text"
+                id="feed-search-input"
+                class="feed-search-input"
+                placeholder="Search across 10,000,000+ board game news, expansions, tournaments, publishers..."
+                autocomplete="off"
+              />
+              <button type="button" class="feed-search-clear" id="feed-search-clear" hidden title="Clear search">✕</button>
+            </div>
+          </div>
+
+          <!-- FEED STATS COUNTER -->
+          <div class="feed-stats-bar">
+            <span class="feed-stats-pill" id="feed-stats-total">⚡ 10,000,000+ TABLETOP CARDS ACTIVE</span>
+            <span class="feed-stats-pill" id="feed-stats-showing">Showing 18 cards</span>
+            <span class="feed-stats-pill" id="feed-stats-page">Page 1 of 555,556</span>
+          </div>
+
+          <!-- CATEGORY & GAME FILTER PILLS -->
           <div class="feed-filter-bar" id="feed-filter-bar">
-            <button type="button" class="feed-filter is-active" data-filter="all">All News</button>
+            <button type="button" class="feed-filter is-active" data-filter="all">🌐 All News (10M+)</button>
             <button type="button" class="feed-filter" data-filter="discussed">🎯 Discussed in Chat</button>
+            <button type="button" class="feed-filter" data-filter="expansion">📦 Expansions</button>
+            <button type="button" class="feed-filter" data-filter="junior">🎈 Junior & Family</button>
+            <button type="button" class="feed-filter" data-filter="tournament">🏆 Championships</button>
+            <button type="button" class="feed-filter" data-filter="component">🪵 3D Upgrades</button>
+            <button type="button" class="feed-filter" data-filter="awards">🎖️ Awards & Fairs</button>
             <button type="button" class="feed-filter" data-filter="Catan">Catan</button>
             <button type="button" class="feed-filter" data-filter="Wingspan">Wingspan</button>
             <button type="button" class="feed-filter" data-filter="Scythe">Scythe</button>
@@ -125,11 +154,31 @@
             <button type="button" class="feed-filter" data-filter="Root">Root</button>
             <button type="button" class="feed-filter" data-filter="Ticket to Ride">Ticket to Ride</button>
             <button type="button" class="feed-filter" data-filter="Azul">Azul</button>
+            <button type="button" class="feed-filter" data-filter="Spirit Island">Spirit Island</button>
+            <button type="button" class="feed-filter" data-filter="Dune: Imperium">Dune: Imperium</button>
+            <button type="button" class="feed-filter" data-filter="Ark Nova">Ark Nova</button>
+            <button type="button" class="feed-filter" data-filter="Gloomhaven">Gloomhaven</button>
+            <button type="button" class="feed-filter" data-filter="Terraforming Mars">Terraforming Mars</button>
+            <button type="button" class="feed-filter" data-filter="The Crew">The Crew</button>
           </div>
         </div>
 
         <div class="news-grid" id="news-grid">
           <!-- News Cards rendered dynamically via news.js -->
+        </div>
+
+        <!-- INFINITE FEED CONTROLS -->
+        <div class="feed-footer-controls">
+          <button type="button" class="btn-load-more" id="btn-load-more">
+            <span>LOAD MORE NEWS (PAGE 2)</span>
+            <span>↓</span>
+          </button>
+          <button type="button" class="btn-random-page" id="btn-random-page">
+            <span>🎲 JUMP TO RANDOM PAGE (MILLIONS OF CARDS)</span>
+          </button>
+          <button type="button" class="btn-top-page" id="btn-top-page">
+            <span>⬆ TOP OF FEED</span>
+          </button>
         </div>
       </section>
 
