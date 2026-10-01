@@ -28,6 +28,7 @@ button, select { cursor: pointer; }
 .topbar-cta:hover { background: var(--red); }
 .topbar-cta span, .hero-cta span { font-size: 16px; line-height: 10px; }
 .status-dot { display: inline-block; width: 7px; height: 7px; background: var(--red); border-radius: 50%; margin-right: 7px; }
+.status-dot-active { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
 .slash { color: var(--red); padding: 0 7px; }
 .chat-intro { display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: end; padding: clamp(50px, 8vw, 100px) 0 54px; }
 .stamp { display: inline-block; background: var(--red); border: 2px solid var(--ink); padding: 8px 10px; font-size: 10px; transform: rotate(-2deg); margin: 0 0 18px; }
@@ -59,12 +60,13 @@ h1 em { color: var(--blue); font-style: normal; }
 .landing-intro h2 em, .games-roadmap h2 em, .landing-final em { color: var(--blue); font-style: normal; }
 .landing-intro > p:last-child { margin: 4px 0 0; color: #4f5952; line-height: 1.6; font-size: 15px; }
 .vision-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
-.vision-block { padding: 32px 38px 37px 0; }
-.vision-block + .vision-block { border-left: 1px solid var(--ink); padding: 32px 0 37px 38px; }
-.vision-block h3 { margin: 24px 0 10px; font-size: 30px; letter-spacing: -.05em; }
-.vision-block p { max-width: 410px; margin: 0 0 23px; color: #4f5952; line-height: 1.55; }
+.vision-block { padding: 32px 34px 36px 0; }
+.vision-block:nth-child(even) { border-left: 1px solid var(--ink); padding-left: 34px; padding-right: 0; }
+.vision-block:nth-child(n+3) { border-top: 1px solid var(--ink); }
+.vision-block h3 { margin: 24px 0 10px; font-size: 28px; letter-spacing: -.05em; }
+.vision-block p { max-width: 410px; margin: 0 0 23px; color: #4f5952; line-height: 1.55; font-size: 14px; }
 .vision-block a { color: var(--blue-dark); font: 10px "DM Mono", monospace; letter-spacing: .08em; text-decoration: none; border-bottom: 1px solid var(--blue-dark); padding-bottom: 4px; }
-.vision-block-accent { background: var(--blue); color: var(--white); padding-right: 38px !important; }
+.vision-block-accent { background: var(--blue); color: var(--white); padding: 32px 34px 36px 34px !important; }
 .vision-block-accent p, .vision-block-accent .vision-index { color: #dce3ff; }
 .vision-coming { display: inline-block; color: var(--white); background: var(--red); border: 1px solid var(--ink); padding: 7px 9px; font: 9px "DM Mono", monospace; transform: rotate(-2deg); }
 .landing-strip { display: flex; justify-content: space-between; gap: 20px; padding: 19px 0; color: var(--muted); font: 9px "DM Mono", monospace; border-bottom: 2px solid var(--ink); }

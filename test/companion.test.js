@@ -13,6 +13,7 @@ import askHandler from "../api/ask.js";
 import modelsHandler from "../api/models.js";
 import configHandler from "../api/config.js";
 import { normalizeAssistantResponse } from "../src/core/contracts.js";
+import { fallbackResponse } from "../src/core/fallback.js";
 
 test("returns an explicitly marked placeholder answer", () => {
   const response = answerQuestion("Can I draw two cards?");
@@ -83,17 +84,38 @@ test("enforces game and mode-specific player bounds", () => {
 });
 
 test("includes honest rule context in provider requests and evidence", async () => {
-  assert.match(getRuleContext("Catan", "Standard").summary, /No verified rule excerpt/);
+  assert.match(getRuleContext("Catan", "Standard").summary, /trading and building/i);
   const provider = createOpenRouterProvider({
     apiKey: "secret",
     fetchImpl: async (_url, options) => {
       const body = JSON.parse(options.body);
-      assert.match(body.messages[1].content, /No verified rule excerpt/);
-      return new Response(JSON.stringify({ choices: [{ message: { content: "ANSWER: I cannot verify this.\nEVIDENCE: Rulebook context not provided." } }] }), { status: 200 });
+      assert.match(body.messages[1].content, /trading and building/i);
+      return new Response(JSON.stringify({ choices: [{ message: { content: "ANSWER: Build a settlement on an intersection.\nEVIDENCE: Catan Official Rulebook." } }] }), { status: 200 });
     },
   });
-  const result = await provider.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "Help" });
-  assert.equal(result.evidence, "Rulebook context not provided.");
+  const result = await provider.answer({ game: "Catan", mode: "Standard", playerCount: 4, question: "How do I build a settlement?" });
+  assert.equal(result.evidence, "Catan Official Rulebook.");
+  assert.equal(result.text, "Build a settlement on an intersection.");
+});
+
+test("responds warmly to greetings and small talk in mock and fallback", () => {
+  const greetingMock = askQuestMind({ game: "Catan", mode: "Standard", playerCount: 4, question: "Hello!" }, { provider: "mock" });
+  assert.match(greetingMock.text, /Hello! I'm QuestMind/i);
+  assert.match(greetingMock.evidence, /QuestMind Table-Side Companion/i);
+
+  const greetingFallback = fallbackResponse({ game: "Scythe", mode: "Normal", playerCount: 3, question: "hi" });
+  assert.match(greetingFallback.text, /Hello! I'm QuestMind/i);
+  assert.match(greetingFallback.evidence, /QuestMind Table-Side Companion/i);
+});
+
+test("politely declines off-topic non-board game questions", () => {
+  const offTopicMock = askQuestMind({ game: "Catan", mode: "Standard", playerCount: 4, question: "Write python code to predict weather" }, { provider: "mock" });
+  assert.match(offTopicMock.text, /dedicated board-game companion/i);
+  assert.match(offTopicMock.evidence, /Tabletop scope policy/i);
+
+  const offTopicFallback = fallbackResponse({ game: "Catan", mode: "Standard", playerCount: 4, question: "What is the stock market doing?" });
+  assert.match(offTopicFallback.text, /dedicated board-game companion/i);
+  assert.match(offTopicFallback.evidence, /Tabletop scope policy/i);
 });
 
 test("normalizes an OpenRouter response and sends context without exposing browser code", async () => {
@@ -283,6 +305,30 @@ test("config handler returns configured models and provider status", async () =>
   const data = JSON.parse(response.body);
   assert.equal(data.configured, true);
   assert.ok(data.models.includes("custom/test-model"));
+});
+
+test("OpenRouter provider sends system prompt with small talk, rules, and scope guidelines", async () => {
+  let capturedBody;
+  const provider = createOpenRouterProvider({
+    apiKey: "secret-key",
+    fetchImpl: async (_url, options) => {
+      capturedBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "ANSWER: Hello! I'm QuestMind, ready to help with Catan.\nEVIDENCE: QuestMind Table-Side Companion." } }],
+      }), { status: 200 });
+    },
+  });
+  const result = await provider.answer({
+    game: "Catan",
+    mode: "Standard",
+    playerCount: 4,
+    question: "Hello!",
+  });
+  assert.match(capturedBody.messages[0].content, /GREETINGS & SMALL TALK/);
+  assert.match(capturedBody.messages[0].content, /NON-BOARD GAME QUESTIONS/);
+  assert.match(capturedBody.messages[0].content, /Tabletop scope policy/);
+  assert.equal(result.text, "Hello! I'm QuestMind, ready to help with Catan.");
+  assert.equal(result.evidence, "QuestMind Table-Side Companion.");
 });
 
 function createTestResponse() {

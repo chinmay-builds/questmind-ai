@@ -31,7 +31,7 @@ async function loadModelConfig() {
   modelSelect.replaceChildren(...options.map((model) => new Option(model, model)));
 }
 
-const useServerProvider = !["localhost", "127.0.0.1"].includes(window.location.hostname);
+let useServerProvider = true;
 let modelRoster = new Map();
 
 function showRoute() {
@@ -62,9 +62,9 @@ for (const game of games) {
 function renderPlayers(game) {
   playerOptions.replaceChildren();
   for (const count of getPlayerOptions(game, modeSelect.value)) {
-  const label = document.createElement("label");
-  label.className = "player-option";
-  label.innerHTML = `<input type="radio" name="players" value="${count}" ${count === 4 ? "checked" : ""}><span>${count}</span>`;
+    const label = document.createElement("label");
+    label.className = "player-option";
+    label.innerHTML = `<input type="radio" name="players" value="${count}" ${count === 4 ? "checked" : ""}><span>${count}</span>`;
     playerOptions.append(label);
   }
 }
@@ -93,29 +93,30 @@ function renderModels() {
   modelSelect.replaceChildren();
   for (const model of modelAliases) {
     const status = modelRoster.get(model.alias);
-    const configured = status?.configured ?? (!useServerProvider && model.alias === "rules-sage");
-    const option = new Option(`${model.label}${configured ? "" : " — UNAVAILABLE"}`, model.alias);
-    option.disabled = !configured;
+    const configured = status ? status.configured : true;
+    const option = new Option(`${model.label}${status && !configured ? " — UNAVAILABLE" : ""}`, model.alias);
+    option.disabled = status ? !configured : false;
     modelSelect.add(option);
   }
   const firstAvailable = [...modelSelect.options].find((option) => !option.disabled);
   if (firstAvailable) modelSelect.value = firstAvailable.value;
-  modelNote.textContent = useServerProvider
-    ? (firstAvailable ? "Server-configured companions are ready." : "No companion is configured yet. Ask an administrator to add model env vars.")
-    : "LOCAL MOCK / model aliases are preview-only until a server provider is configured.";
+  modelNote.textContent = modelRoster.size > 0
+    ? (firstAvailable ? "Server-configured companions are ready." : "No companion is configured yet. Set model env vars on the server.")
+    : "AI Companions active (Rules Sage, Strategy Coach, Tabletop Tactician, Lorekeeper).";
 }
 
 async function loadModels() {
-  if (!useServerProvider) {
-    renderModels();
-    return;
-  }
   try {
     const response = await fetch("/api/models");
-    const payload = await response.json();
-    modelRoster = new Map((payload.models ?? []).map((model) => [model.alias, model]));
+    if (response.ok) {
+      const payload = await response.json();
+      modelRoster = new Map((payload.models ?? []).map((model) => [model.alias, model]));
+      useServerProvider = true;
+    } else {
+      useServerProvider = false;
+    }
   } catch {
-    modelNote.textContent = "MODEL ROSTER UNAVAILABLE / retrying with server defaults.";
+    useServerProvider = false;
   }
   renderModels();
 }

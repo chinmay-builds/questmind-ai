@@ -26,13 +26,40 @@ function readConfig(env = globalThis.process?.env, overrides = {}) {
   };
 }
 
+function formatUserMessage(request) {
+  const lines = [
+    `Game: ${request.game}`,
+    `Mode: ${request.mode}`,
+    `Players: ${request.playerCount}`,
+    `Question: ${request.question}`,
+  ];
+  if (request.ruleContext?.summary) {
+    lines.push(`Game Rule Overview: ${request.ruleContext.summary}`);
+  }
+  if (request.ruleContext?.evidence) {
+    lines.push(`Rule Reference: ${request.ruleContext.evidence}`);
+  }
+  return lines.join("\n");
+}
+
 function messageContent(request) {
-  const text = `Game: ${request.game}\nMode: ${request.mode}\nPlayers: ${request.playerCount}\nQuestion: ${request.question}`;
+  const text = formatUserMessage(request);
   const images = request.attachments
     .filter(({ dataUrl }) => typeof dataUrl === "string" && dataUrl.startsWith("data:image/"))
     .map(({ dataUrl }) => ({ type: "image_url", image_url: { url: dataUrl } }));
   return images.length ? [{ type: "text", text }, ...images] : text;
 }
+
+const SYSTEM_PROMPT = `You are QuestMind, an expert, friendly, and concise table-side board-game companion.
+Your mission is to keep game night moving smoothly by answering rules questions, evaluating turns, clarifying card interactions, and providing tactical guidance.
+
+Strict behavior rules:
+1. GREETINGS & SMALL TALK: If the user says hello, hi, hey, thanks, or engages in casual small talk, reply warmly and politely in 1-2 short sentences. Introduce yourself as QuestMind, their table-side companion for the selected game. Set EVIDENCE to: QuestMind Table-Side Companion.
+2. BOARD GAME QUESTIONS: Answer questions about board game rules, card powers, turn choices, strategy, setup, and edge cases directly, clearly, and concisely in 1-3 short sentences. Draw upon official rules, standard tabletop mechanics, attached images, and search results. Never refuse standard rules questions when the rule is known. Set EVIDENCE to the official rulebook section, card name, or rule reference.
+3. NON-BOARD GAME QUESTIONS: If the user asks about topics completely unrelated to board games or tabletop gaming (such as general programming, weather, politics, recipes, general trivia, personal advice), politely decline and state that QuestMind is exclusively a board-game companion. Set EVIDENCE to: Tabletop scope policy.
+4. FORMAT: You must ALWAYS format your response with exactly two labeled lines:
+ANSWER: <your direct answer, greeting, or friendly decline>
+EVIDENCE: <rule source, rulebook section, card, or scope policy>`;
 
 function extractAssistantText(payload) {
   const content = payload?.choices?.[0]?.message?.content;
@@ -76,8 +103,8 @@ export function createOpenRouterProvider(options = {}) {
                 model: request.model || config.model,
                 plugins: request.webSearch === false ? undefined : [{ id: "web", max_results: 5 }],
                 messages: [
-                  { role: "system", content: "You are QuestMind, a concise and grounded board-game companion. Answer only the user's exact question in plain language, usually in 1-3 short sentences. Use the supplied game, mode, player count, rule text, and image context first. Do not add tangents, strategy advice, or unrelated rules. Never invent citations, URLs, browsing, or certainty. If the supplied context is insufficient to verify the answer, say so plainly and ask for the relevant rulebook page, rule text, or clearer image. Return exactly two labeled lines: ANSWER: <concise answer or inability to verify> and EVIDENCE: <relevant supplied rule section/source, or 'Not provided — please share the relevant rulebook page, rule text, or image.'>." },
-                  { role: "user", content: `${messageContent(request)}\nVerified context: ${request.ruleContext.summary}\nEvidence label: ${request.ruleContext.evidence}` },
+                  { role: "system", content: SYSTEM_PROMPT },
+                  { role: "user", content: messageContent(request) },
                 ],
               }),
             });
