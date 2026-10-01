@@ -167,7 +167,7 @@ export const storyFormats = [
     category: "designer",
     tag: "Designer Diary",
     title: (g, p, num) => `Behind the Board: How the Lead Designer Crafted the World of ${g.name}`,
-    summary: (g, p, num) => `An inspiring behind-the-scenes look into how the creators balanced intricate math, engaging thematic worldbuilding in ${g.theme}, and delightful kid-friendly mechanics.`,
+    summary: (g, p, num) => `An inspiring behind-the-scenes look into how the creators balanced intricate math, engaging thematic worldbuilding in ${g.theme}, and accessible gameplay mechanics.`,
   },
   {
     category: "collector",
@@ -251,7 +251,7 @@ export function generateNewsCard(index, activeGame = "", chatHistory = [], expli
     <p>${summary}</p>
     <p>Strategists and families will delight in the upgraded tactile components including premium <strong>${game.component}</strong>, balanced turn mechanics, and streamlined rule explanations suited for both beginners and tabletop veterans.</p>
     <div class="article-quote-box">
-      <p>"Our focus has always been crafting memorable game nights where kids and parents alike can build unforgettable memories together," stated the publishing team at ${pubMatch.name}.</p>
+      <p>"Our focus has always been crafting memorable game nights where tabletop players of all skill levels can build unforgettable memories together," stated the publishing team at ${pubMatch.name}.</p>
     </div>
     <p>You can explore full product catalogs, rules PDFs, component galleries, and official store listings directly on the official <strong>${pubMatch.name}</strong> website at <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer">${pubMatch.domain}</a>.</p>
   `;

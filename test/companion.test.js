@@ -423,7 +423,7 @@ test("sessionsHandler handles offline mode gracefully without crashing", async (
   assert.equal(data.success, true);
 });
 
-test("getPersonalizedNews returns kid-appropriate articles prioritized by chat history", async () => {
+test("getPersonalizedNews returns tabletop news articles prioritized by chat history", async () => {
   const { getPersonalizedNews, boardGameNews } = await import("../src/news.js");
   assert.ok(boardGameNews.length >= 10);
   assert.ok(boardGameNews.every((item) => item.title && item.publisher && item.sourceDomain && item.sourceUrl));

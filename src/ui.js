@@ -478,7 +478,7 @@ function renderNewsFeed(append = false) {
   if (currentChatHistory.length > 0) {
     feedSubtitle.textContent = `Personalized for your active session of ${gameSelect.value} and recent companion questions.`;
   } else {
-    feedSubtitle.textContent = `Kid-friendly, exciting board game announcements, expansions, and publisher highlights across 10,000,000+ procedural cards.`;
+    feedSubtitle.textContent = `Exciting board game announcements, expansions, and publisher highlights across 10,000,000+ procedural cards.`;
   }
 
   if (pageResult.items.length === 0 && !append) {
