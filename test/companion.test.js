@@ -122,9 +122,17 @@ test("responds warmly to greetings and small talk in mock and fallback", () => {
   assert.match(greetingMock.text, /Hello! I'm QuestMind/i);
   assert.match(greetingMock.evidence, /QuestMind Table-Side Companion/i);
 
+  const wassupMock = askQuestMind({ game: "Catan", mode: "Standard", playerCount: 4, question: "Wassup" }, { provider: "mock" });
+  assert.match(wassupMock.text, /Hello! I'm QuestMind/i);
+  assert.match(wassupMock.evidence, /QuestMind Table-Side Companion/i);
+
   const greetingFallback = fallbackResponse({ game: "Scythe", mode: "Normal", playerCount: 3, question: "hi" });
   assert.match(greetingFallback.text, /Hello! I'm QuestMind/i);
   assert.match(greetingFallback.evidence, /QuestMind Table-Side Companion/i);
+
+  const wassupFallback = fallbackResponse({ game: "Catan", mode: "Standard", playerCount: 4, question: "Wassup" });
+  assert.match(wassupFallback.text, /Hello! I'm QuestMind/i);
+  assert.match(wassupFallback.evidence, /QuestMind Table-Side Companion/i);
 });
 
 test("politely declines off-topic non-board game questions", () => {
@@ -302,7 +310,7 @@ test("provider failures produce a safe retry fallback", async () => {
   const payload = JSON.parse(response.body);
   assert.equal(response.statusCode, 503);
   assert.equal(payload.fallback.provider, "fallback");
-  assert.match(payload.fallback.text, /couldn't verify|retry/i);
+  assert.match(payload.fallback.text, /Catan|turn structure|victory points/i);
 });
 
 test("resolves default openrouter model when OPENROUTER_API_KEY is provided", () => {
@@ -372,6 +380,16 @@ test("OpenRouter provider resolves model aliases to valid provider model IDs", a
   assert.equal(capturedBody.model, "google/gemini-2.0-flash-exp:free");
   assert.notEqual(capturedBody.model, "rules-sage");
   assert.match(result.text, /Automa mode/);
+});
+
+test("fallbackResponse provides grounded rules answers for catalog games", () => {
+  const buildFallback = fallbackResponse({ game: "Catan", mode: "Standard", playerCount: 4, question: "How do I build a road?" });
+  assert.match(buildFallback.text, /Roads cost 1 Brick/i);
+  assert.match(buildFallback.evidence, /Catan Official Rules · Building & Placement/i);
+
+  const winFallback = fallbackResponse({ game: "Scythe", mode: "Normal", playerCount: 3, question: "How do I win?" });
+  assert.match(winFallback.text, /6th star/i);
+  assert.match(winFallback.evidence, /Scythe Official Rules · Victory & Scoring/i);
 });
 
 function createTestResponse() {

@@ -1,9 +1,6 @@
 import { normalizeAssistantResponse, validateQuestRequest } from "../contracts.js";
 import { getRuleDetails } from "../../rules.js";
-
-const GREETING_REGEX = /^(hi|hello|hey|yo|greetings|good\s+(morning|afternoon|evening)|howdy|sup|how\s+are\s+you|who\s+are\s+you|what\s+can\s+you\s+do|thanks|thank\s+you)\b/i;
-
-const OFF_TOPIC_REGEX = /\b(python|javascript|typescript|html|css|sql|coding|programming|weather|president|election|recipe|cook|bake|movie|stock\s+market|crypto|homework|physics|calculus|flight|hotel)\b/i;
+import { GREETING_REGEX, OFF_TOPIC_REGEX } from "../fallback.js";
 
 export const mockProvider = {
   name: "mock",

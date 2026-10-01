@@ -116,6 +116,13 @@ export function createOpenRouterProvider(options = {}) {
               signal: controller.signal,
               body: JSON.stringify({
                 model: resolvedModel,
+                models: [
+                  resolvedModel,
+                  "google/gemini-2.0-flash-exp:free",
+                  "meta-llama/llama-3.3-70b-instruct:free",
+                  "openrouter/free",
+                  "openrouter/auto",
+                ].filter((v, i, a) => typeof v === "string" && v.trim() && a.indexOf(v) === i),
                 plugins: request.webSearch === false ? undefined : [{ id: "web", max_results: 5 }],
                 messages: [
                   { role: "system", content: SYSTEM_PROMPT },
