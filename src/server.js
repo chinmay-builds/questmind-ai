@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import askHandler from "../api/ask.js";
 import modelsHandler from "../api/models.js";
 import configHandler from "../api/config.js";
+import sessionsHandler from "../api/sessions.js";
+import authHandler from "../api/auth.js";
 
 try {
   process.loadEnvFile?.();
@@ -28,6 +30,12 @@ function wrapResponse(response) {
       return this;
     };
   }
+  if (!response.json) {
+    response.json = function json(payload) {
+      this.setHeader("Content-Type", "application/json; charset=utf-8");
+      this.end(JSON.stringify(payload));
+    };
+  }
   return response;
 }
 
@@ -48,6 +56,14 @@ const server = createServer(async (request, response) => {
     await configHandler(request, response);
     return;
   }
+  if (pathname === "/api/sessions") {
+    await sessionsHandler(request, response);
+    return;
+  }
+  if (pathname.startsWith("/api/auth")) {
+    await authHandler(request, response);
+    return;
+  }
 
   const requested = pathname === "/" ? "/index.html" : pathname;
   const file = normalize(join(root, requested));
@@ -65,4 +81,3 @@ const server = createServer(async (request, response) => {
 
 const port = Number(process.env.PORT ?? 4173);
 server.listen(port, () => console.log(`QuestMind UI running at http://localhost:${port}`));
-

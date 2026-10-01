@@ -392,6 +392,37 @@ test("fallbackResponse provides grounded rules answers for catalog games", () =>
   assert.match(winFallback.evidence, /Scythe Official Rules · Victory & Scoring/i);
 });
 
+test("signUpWithEmail validates inputs and blocks duplicate account registration", async () => {
+  const { signUpWithEmail } = await import("../src/auth.js");
+  const invalidEmail = await signUpWithEmail("Alex", "invalid-email", "pass123");
+  assert.equal(invalidEmail.success, false);
+  assert.match(invalidEmail.error, /valid email/i);
+
+  const shortPass = await signUpWithEmail("Alex", "player@tabletop.dev", "123");
+  assert.equal(shortPass.success, false);
+  assert.match(shortPass.error, /6 characters/i);
+});
+
+test("signInWithEmail validates required credentials", async () => {
+  const { signInWithEmail } = await import("../src/auth.js");
+  const noPass = await signInWithEmail("player@tabletop.dev", "");
+  assert.equal(noPass.success, false);
+  assert.match(noPass.error, /password/i);
+
+  const noEmail = await signInWithEmail("", "pass123");
+  assert.equal(noEmail.success, false);
+  assert.match(noEmail.error, /email/i);
+});
+
+test("sessionsHandler handles offline mode gracefully without crashing", async () => {
+  const sessionsHandler = (await import("../api/sessions.js")).default;
+  const res = createTestResponse();
+  await sessionsHandler({ method: "GET", url: "/api/sessions?userId=test" }, res);
+  assert.equal(res.statusCode, 200);
+  const data = JSON.parse(res.body);
+  assert.equal(data.success, true);
+});
+
 function createTestResponse() {
   return {
     statusCode: 200,
@@ -400,5 +431,9 @@ function createTestResponse() {
     status(code) { this.statusCode = code; return this; },
     setHeader(name, value) { this.headers[name] = value; return this; },
     end(body = "") { this.body = body; },
+    json(payload) {
+      this.setHeader("Content-Type", "application/json");
+      this.body = JSON.stringify(payload);
+    },
   };
 }

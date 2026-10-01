@@ -2,6 +2,15 @@ import { games, getPlayerOptions } from "./games.js";
 import { askQuestMind } from "./core/api.js";
 import { modelAliases } from "./core/config.js";
 import { fallbackResponse } from "./core/fallback.js";
+import {
+  fetchSession,
+  getStoredUser,
+  signInWithGoogle,
+  signInWithEmail,
+  signUpWithEmail,
+  signOut,
+} from "./auth.js";
+import { saveGameSession, loadUserSessions } from "./history.js";
 
 const gameSelect = document.querySelector("#game-select");
 const modeSelect = document.querySelector("#mode-select");
@@ -22,15 +31,39 @@ const landingView = document.querySelector("#landing-view");
 const chatView = document.querySelector("#chat-view");
 const routeLinks = document.querySelectorAll("[data-route]");
 const topbarRoute = document.querySelector("#topbar-route");
+const syncIndicator = document.querySelector("#sync-indicator");
+
+// Auth Elements
+const authModal = document.querySelector("#auth-modal");
+const authButton = document.querySelector("#auth-button");
+const heroAuthBtn = document.querySelector("#hero-auth-btn");
+const authClose = document.querySelector("#auth-close");
+const authAlert = document.querySelector("#auth-alert");
+const authTabs = document.querySelectorAll(".auth-tab");
+const tabGoogle = document.querySelector("#tab-google");
+const authForm = document.querySelector("#auth-form");
+const authProfile = document.querySelector("#auth-profile");
+const groupName = document.querySelector("#group-name");
+const authName = document.querySelector("#auth-name");
+const authEmail = document.querySelector("#auth-email");
+const authPassword = document.querySelector("#auth-password");
+const btnAuthSubmit = document.querySelector("#btn-auth-submit");
+const btnGoogleSignin = document.querySelector("#btn-google-signin");
+const btnSignout = document.querySelector("#btn-signout");
+const btnReturn = document.querySelector("#btn-return");
+const profileName = document.querySelector("#profile-name");
+const profileEmail = document.querySelector("#profile-email");
+const profileAvatar = document.querySelector("#profile-avatar");
+
+// History Elements
+const historyList = document.querySelector("#history-list");
+const historyToggle = document.querySelector("#history-toggle");
+
 const attachments = [];
 let messageCount = 1;
-
-async function loadModelConfig() {
-  const models = useServerProvider ? await fetch("/api/config").then((response) => response.ok ? response.json() : null).catch(() => null) : null;
-  const options = models?.models?.length ? models.models : ["openrouter/free"];
-  modelSelect.replaceChildren(...options.map((model) => new Option(model, model)));
-}
-
+let currentChatHistory = [];
+let activeUser = null;
+let currentAuthMode = "google";
 let useServerProvider = true;
 let modelRoster = new Map();
 
@@ -160,9 +193,31 @@ function addMessage(kind, text, imageUrls = [], evidence = "") {
   message.scrollIntoView({ behavior: "smooth", block: "nearest" });
   messageCount += 1;
   chatCount.textContent = `${String(messageCount).padStart(2, "0")} MESSAGES`;
+
+  currentChatHistory.push({
+    kind,
+    text,
+    evidence,
+    time: Date.now(),
+  });
+
+  // Automatically persist to Neon database if user is connected
+  if (activeUser) {
+    saveGameSession({
+      game: gameSelect.value,
+      mode: modeSelect.value,
+      playerCount: Number(selectedPlayers()),
+      companionAlias: modelSelect.value,
+      history: currentChatHistory,
+      notes: `Session for ${gameSelect.value} (${modeSelect.value})`,
+    });
+  }
 }
 
-gameSelect.addEventListener("change", updateContext);
+gameSelect.addEventListener("change", () => {
+  updateContext();
+  currentChatHistory = [];
+});
 modeSelect.addEventListener("change", () => updatePlayerContext());
 playerOptions.addEventListener("change", () => updatePlayerContext());
 attachButton.addEventListener("click", () => imageInput.click());
@@ -173,6 +228,7 @@ imageInput.addEventListener("change", () => {
   imageInput.value = "";
   renderAttachments();
 });
+
 function fileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -209,20 +265,22 @@ composer.addEventListener("submit", async (event) => {
   submitButton.disabled = true;
   submitButton.querySelector("span").textContent = "THINKING…";
   composerNote.textContent = useServerProvider ? "CONNECTING TO QUESTMIND CORE…" : "LOCAL MOCK / NO AI CONNECTED";
+
   const request = {
-      game: gameSelect.value,
-      mode: modeSelect.value,
-      playerCount: Number(selectedPlayers()),
-      model: modelSelect.value,
-      webSearch: webSearchToggle.checked,
-      question,
-      attachments: await Promise.all(attachments.map(async ({ file }) => ({
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        dataUrl: await fileAsDataUrl(file),
-      }))),
-    };
+    game: gameSelect.value,
+    mode: modeSelect.value,
+    playerCount: Number(selectedPlayers()),
+    model: modelSelect.value,
+    webSearch: webSearchToggle.checked,
+    question,
+    attachments: await Promise.all(attachments.map(async ({ file }) => ({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      dataUrl: await fileAsDataUrl(file),
+    }))),
+  };
+
   try {
     const response = await requestAnswer(request);
     questionInput.value = "";
@@ -240,7 +298,192 @@ composer.addEventListener("submit", async (event) => {
   }
 });
 
+// ── AUTH & SESSION LOGIC ──
+
+function setAuthAlert(msg) {
+  if (msg) {
+    authAlert.textContent = `⚠️ ${msg}`;
+    authAlert.hidden = false;
+  } else {
+    authAlert.hidden = true;
+    authAlert.textContent = "";
+  }
+}
+
+function updateAuthState(user) {
+  activeUser = user;
+  if (user) {
+    authButton.innerHTML = `<span>⚡ ${user.name || user.email.split("@")[0]}</span>`;
+    authButton.classList.add("is-logged-in");
+    syncIndicator.textContent = "NEON POSTGRESQL SYNC ACTIVE";
+    syncIndicator.style.color = "var(--green)";
+    loadHistory();
+  } else {
+    authButton.innerHTML = `<span>⚡ SIGN IN</span>`;
+    authButton.classList.remove("is-logged-in");
+    syncIndicator.textContent = "TABLE-SIDE AI / 4 COMPANIONS ACTIVE";
+    syncIndicator.style.color = "";
+    historyList.innerHTML = `<div class="history-empty">Sign in to sync past game sessions.</div>`;
+  }
+}
+
+function renderAuthModal() {
+  setAuthAlert("");
+  if (activeUser) {
+    tabGoogle.hidden = true;
+    authForm.hidden = true;
+    document.querySelector("#auth-tabs").hidden = true;
+    authProfile.hidden = false;
+    profileName.textContent = activeUser.name || "Player";
+    profileEmail.textContent = activeUser.email;
+    profileAvatar.textContent = (activeUser.name || activeUser.email || "P")[0].toUpperCase();
+  } else {
+    authProfile.hidden = true;
+    document.querySelector("#auth-tabs").hidden = false;
+    authTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.authMode === currentAuthMode));
+
+    if (currentAuthMode === "google") {
+      tabGoogle.hidden = false;
+      authForm.hidden = true;
+    } else {
+      tabGoogle.hidden = true;
+      authForm.hidden = false;
+      groupName.hidden = currentAuthMode !== "signUp";
+      btnAuthSubmit.textContent = currentAuthMode === "signUp" ? "⚡ CREATE ACCOUNT" : "⚡ SIGN IN";
+    }
+  }
+}
+
+function openAuthModal(mode = "google") {
+  currentAuthMode = mode;
+  renderAuthModal();
+  authModal.hidden = false;
+}
+
+function closeAuthModal() {
+  authModal.hidden = true;
+}
+
+authButton?.addEventListener("click", () => openAuthModal("google"));
+heroAuthBtn?.addEventListener("click", () => openAuthModal("google"));
+authClose?.addEventListener("click", closeAuthModal);
+btnReturn?.addEventListener("click", closeAuthModal);
+authModal?.addEventListener("click", (e) => {
+  if (e.target === authModal) closeAuthModal();
+});
+
+authTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    currentAuthMode = tab.dataset.authMode;
+    renderAuthModal();
+  });
+});
+
+btnGoogleSignin?.addEventListener("click", async () => {
+  btnGoogleSignin.disabled = true;
+  setAuthAlert("");
+  const res = await signInWithGoogle();
+  if (!res.success) {
+    setAuthAlert(res.error);
+    btnGoogleSignin.disabled = false;
+  }
+});
+
+authForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  setAuthAlert("");
+  btnAuthSubmit.disabled = true;
+  btnAuthSubmit.textContent = "CONNECTING…";
+
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  const name = authName.value.trim();
+
+  if (currentAuthMode === "signUp") {
+    const res = await signUpWithEmail(name, email, password);
+    if (res.success && res.user) {
+      updateAuthState(res.user);
+      closeAuthModal();
+    } else {
+      setAuthAlert(res.error || "Failed to create account.");
+    }
+  } else {
+    const res = await signInWithEmail(email, password);
+    if (res.success && res.user) {
+      updateAuthState(res.user);
+      closeAuthModal();
+    } else {
+      setAuthAlert(res.error || "Invalid email or password.");
+    }
+  }
+  btnAuthSubmit.disabled = false;
+  btnAuthSubmit.textContent = currentAuthMode === "signUp" ? "⚡ CREATE ACCOUNT" : "⚡ SIGN IN";
+});
+
+btnSignout?.addEventListener("click", async () => {
+  await signOut();
+  updateAuthState(null);
+  closeAuthModal();
+});
+
+// ── HISTORY LOADING ──
+
+async function loadHistory() {
+  if (!activeUser) return;
+  historyList.innerHTML = `<div class="history-empty">Loading Neon sessions…</div>`;
+  const sessions = await loadUserSessions(activeUser.id || activeUser.email);
+  if (!sessions || sessions.length === 0) {
+    historyList.innerHTML = `<div class="history-empty">No past sessions saved yet.</div>`;
+    return;
+  }
+  historyList.replaceChildren();
+  sessions.forEach((s) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "history-item";
+    const dateStr = s.updated_at ? new Date(s.updated_at).toLocaleDateString() : "Recent";
+    const msgCount = Array.isArray(s.history) ? s.history.length : 0;
+    item.innerHTML = `
+      <div class="history-item-game">${s.game} (${s.mode || "Standard"})</div>
+      <div class="history-item-meta">${s.companion_alias || "Rules Sage"} · ${msgCount} msgs · ${dateStr}</div>
+    `;
+    item.addEventListener("click", () => {
+      gameSelect.value = s.game;
+      updateContext();
+      if (s.mode) modeSelect.value = s.mode;
+      updatePlayerContext();
+      if (s.companion_alias) modelSelect.value = s.companion_alias;
+
+      // Restore messages
+      if (Array.isArray(s.history) && s.history.length > 0) {
+        stream.replaceChildren();
+        currentChatHistory = [];
+        messageCount = 0;
+        s.history.forEach((m) => {
+          addMessage(m.kind, m.text, [], m.evidence);
+        });
+      }
+    });
+    historyList.append(item);
+  });
+}
+
+historyToggle?.addEventListener("click", () => {
+  if (!activeUser) {
+    openAuthModal("google");
+  } else {
+    document.querySelector("#history-panel")?.scrollIntoView({ behavior: "smooth" });
+  }
+});
+
+// ── INITIALIZE ──
+
 updateContext();
 renderModels();
 loadModels();
 showRoute();
+
+// Check existing session
+fetchSession().then((user) => {
+  if (user) updateAuthState(user);
+});

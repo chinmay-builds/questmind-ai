@@ -1,148 +1,282 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f3ead8" />
-    <meta name="description" content="QuestMind is a table-side companion for clearer rules, smarter turns, and better board-game nights." />
-    <meta property="og:title" content="QuestMind — Ask better. Play sharper." />
-    <meta property="og:description" content="A table-side companion for rules, edge cases, and your next move." />
-    <meta property="og:type" content="website" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuestMind — Table-side AI Game Companion</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate icon" type="image/png" href="/favicon.png" />
-    <link rel="mask-icon" href="/favicon.svg" color="#365dcc" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
-    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <!--
-      THESIS: A table-side command console, not a generic chatbot: set the game
-      context, then ask one clear question.
-      OWN-WORLD: Warm rulebook paper, ink-black type, cobalt tabs, tomato-red
-      stamps, and tactile 2px borders that feel pulled from a board-game box.
-      STORY: Players see their exact table context, attach a board state, and
-      get an honest local placeholder while the real companion is still cooking.
-      FIRST VIEWPORT: A narrow top rail leads into a two-column desk: context
-      controls on the left, conversation on the right, with the composer always
-      visible at the bottom of the chat column.
-      FORM: Operate surface / split-console staging, committed retro tabletop
-      direction, seed not applicable (brief-pinned retro chatbot UI).
-    -->
-    <main class="app-shell">
-      <header class="topbar">
-        <a class="brand" href="/" aria-label="QuestMind home">
-          <span class="brand-mark">Q</span>
-          <span>QUESTMIND</span>
+    <header class="topbar">
+      <div class="topbar-left">
+        <a class="brand" href="/" data-route="home">
+          <span class="brand-badge">Q</span>
+          <span class="brand-text">QuestMind</span>
         </a>
-        <div class="topbar-actions">
-          <div class="topbar-note"><span class="status-dot status-dot-active"></span> TABLE-SIDE AI <span class="slash">/</span> 4 COMPANIONS ACTIVE</div>
-          <a class="topbar-cta" id="topbar-route" href="#chat" data-route="chat">ENTER QUESTMIND <span>↗</span></a>
+        <div class="topbar-status">
+          <span class="status-dot"></span>
+          <span id="sync-indicator">TABLE-SIDE AI / 4 COMPANIONS ACTIVE</span>
         </div>
-      </header>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="btn-history" id="history-toggle" aria-label="Toggle chat history">
+          <span>📜 HISTORY</span>
+        </button>
+        <button type="button" class="btn-auth" id="auth-button">
+          <span>⚡ SIGN IN</span>
+        </button>
+        <a class="route-link" id="topbar-route" href="#chat" data-route="chat">
+          ENTER QUESTMIND <span>↗</span>
+        </a>
+      </div>
+    </header>
 
-      <section class="landing-view route-view" id="landing-view" aria-labelledby="landing-heading">
+    <main class="viewport">
+      <!-- LANDING VIEW -->
+      <section class="landing-view" id="landing-view">
         <div class="landing-hero">
-          <div class="hero-copy">
-            <p class="stamp">YOUR TABLE-SIDE AI CO-PILOT</p>
-            <h1 id="landing-heading">Rules out.<br /><em>Play on.</em></h1>
-            <p class="hero-lede">QuestMind turns “wait, how does this work?” into a confident next move. Pick your AI companion persona, set your table context, attach board photos, and keep the table moving.</p>
-            <a class="hero-cta" href="#chat" data-route="chat">ENTER QUESTMIND <span>↗</span></a>
-            <p class="hero-note">4 AI Companion Personas · Real-Time Grounded Search · Board-State Vision</p>
+          <div class="hero-tag">TABLETOP CO-PILOT · NEON CLOUD SYNC</div>
+          <h1 class="hero-title">Your table-side companion for uninterrupted game night.</h1>
+          <p class="hero-subtitle">
+            Grounded rules verification, tactical turn evaluations, and board state vision for over 20 top modern board games. Pick a companion persona, verify edge cases in seconds, and keep the game moving.
+          </p>
+          <div class="hero-actions">
+            <a href="#chat" data-route="chat" class="btn-primary">
+              LAUNCH TABLE COMPANION <span>→</span>
+            </a>
+            <button type="button" class="btn-secondary" id="hero-auth-btn">
+              ⚡ CONNECT NEON ACCOUNT
+            </button>
           </div>
-          <div class="hero-art" aria-label="Illustration of the QuestMind table-side console">
-            <div class="art-sticker">QM<br /><small>001</small></div>
-            <div class="art-card art-card-back">ASK<br /><strong>BETTER</strong></div>
-            <div class="art-card art-card-front"><span>TABLE NOTE</span><strong>PLAY<br /><em>SHARPER.</em></strong><small>RULES · STRATEGY · VISION · LORE</small></div>
-            <div class="art-doodle">✦</div>
+        </div>
+
+        <div class="landing-grid">
+          <div class="persona-card">
+            <div class="persona-icon">📖</div>
+            <h3>Rules Sage</h3>
+            <p>Official rulebook citations, turn structures, building requirements, and dispute resolutions.</p>
+          </div>
+          <div class="persona-card">
+            <div class="persona-icon">🎯</div>
+            <h3>Strategy Coach</h3>
+            <p>Turn planning, opening moves, tempo trade-offs, and asymmetric scoring optimizations.</p>
+          </div>
+          <div class="persona-card">
+            <div class="persona-icon">⚔️</div>
+            <h3>Tabletop Tactician</h3>
+            <p>Board state evaluations, combat dials, threat assessments, and engine calculations.</p>
+          </div>
+          <div class="persona-card">
+            <div class="persona-icon">📜</div>
+            <h3>Lorekeeper</h3>
+            <p>Card interactions, faction traits, thematic edge cases, and narrative scenario briefings.</p>
           </div>
         </div>
-        <div class="landing-intro">
-          <p class="section-kicker">4 SPECIALIZED AI PERSONAS</p>
-          <h2>Less rulebook rummaging.<br /><em>More good turns.</em></h2>
-          <p>QuestMind brings four dedicated AI companions to your table. Whether you need instant rule clarification, turn planning advice, vision-based board analysis, or deep faction lore, QuestMind keeps game night moving smoothly.</p>
+
+        <div class="catalog-strip">
+          <div class="catalog-header">SUPPORTED TABLETOP CATALOG</div>
+          <div class="catalog-tags">
+            <span class="tag">Catan</span>
+            <span class="tag">Scythe</span>
+            <span class="tag">Wingspan</span>
+            <span class="tag">Root</span>
+            <span class="tag">Gloomhaven</span>
+            <span class="tag">Terraforming Mars</span>
+            <span class="tag">Spirit Island</span>
+            <span class="tag">Ark Nova</span>
+            <span class="tag">Ticket to Ride</span>
+            <span class="tag">Betrayal at House on the Hill</span>
+            <span class="tag">Dune: Imperium</span>
+            <span class="tag">Everdell</span>
+            <span class="tag">7 Wonders</span>
+            <span class="tag">Pandemic</span>
+            <span class="tag">The Crew</span>
+            <span class="tag">Azul</span>
+            <span class="tag">Carcassonne</span>
+            <span class="tag">Dominion</span>
+            <span class="tag">Mansions of Madness</span>
+            <span class="tag">Blood on the Clocktower</span>
+          </div>
         </div>
-        <div class="vision-grid">
-          <article class="vision-block"><span class="vision-index">01 / RULES SAGE</span><h3>Make the rule click.</h3><p>Instant plain-language answers for turn sequences, phase limits, and tricky edge cases backed by official rules.</p><a href="#chat" data-route="chat">CONSULT RULES SAGE <span>→</span></a></article>
-          <article class="vision-block"><span class="vision-index">02 / STRATEGY COACH</span><h3>See the next move.</h3><p>Weigh optimal turn choices, engine-building trade-offs, and tempo without taking over the table.</p><a href="#chat" data-route="chat">GET STRATEGY TIPS <span>→</span></a></article>
-          <article class="vision-block"><span class="vision-index">03 / TABLETOP TACTICIAN</span><h3>Read the board state.</h3><p>Attach photos of messy boards, card grids, or contested hexes for accurate vision-based situation analysis.</p><a href="#chat" data-route="chat">ANALYZE BOARD STATE <span>→</span></a></article>
-          <article class="vision-block vision-block-accent"><span class="vision-index">04 / LOREKEEPER</span><h3>Know your world.</h3><p>Explore asymmetric faction abilities, character cards, storyline context, and thematic scenario setups.</p><a href="#chat" data-route="chat" style="color: #fff; border-color: #fff;">EXPLORE LORE <span>→</span></a></article>
-        </div>
-        <div class="landing-strip"><span>20+ TABLETOP GAMES</span><span>4 AI COMPANION PERSONAS</span><span>GROUNDED WEB SEARCH</span><span>BOARD-STATE VISION</span></div>
-        <div class="games-roadmap">
-          <div><p class="section-kicker">ON THE TABLE</p><h2>Start with the games<br /><em>you already love.</em></h2></div>
-          <div class="game-tags"><span>SCYTHE</span><span>CATAN</span><span>WINGSPAN</span><span>ROOT</span><span>GLOOMHAVEN</span><span>SPIRIT ISLAND</span><span>ARK NOVA</span><span>DUNE: IMPERIUM</span><span>TERRAFORMING MARS</span><span>EVERDELL</span><span>7 WONDERS</span><span>PANDEMIC</span><span>AZUL</span><span>CARCASSONNE</span><span>DOMINION</span><span>+ 5 MORE</span></div>
-        </div>
-        <div class="landing-final"><p>Ready to make rules debates<br /><em>the easy part?</em></p><a class="hero-cta" href="#chat" data-route="chat">ENTER QUESTMIND <span>↗</span></a></div>
       </section>
 
-      <section class="chat-view route-view" id="chat-view" aria-labelledby="chat-heading" hidden>
-      <div class="chat-intro">
-        <div><p class="stamp">TABLE-SIDE COMPANION</p><h1>Ask better.<br /><em>Play sharper.</em></h1></div>
-        <p class="intro-copy">Set the table context, point QuestMind at a rule or board state, and get a clear next step. No bluffing. No hidden magic.</p>
-      </div>
-      <div class="workspace">
-        <aside class="context-panel" aria-labelledby="context-heading">
-          <div class="panel-heading">
-            <span class="panel-number">01</span>
-            <h2 id="context-heading">Set the table</h2>
+      <!-- CHAT / COMPANION VIEW -->
+      <section class="chat-view" id="chat-view" hidden>
+        <aside class="sidebar">
+          <div class="sidebar-block">
+            <label for="game-select" class="field-label">BOARD GAME</label>
+            <select id="game-select" class="select-field"></select>
           </div>
 
-          <label class="field-label" for="game-select">Game</label>
-          <select id="game-select" class="select-control"></select>
-
-          <label class="field-label" for="mode-select">Mode</label>
-          <select id="mode-select" class="select-control"></select>
-
-          <fieldset class="player-field">
-            <legend class="field-label">Players</legend>
-            <div class="player-options" id="player-options" role="radiogroup" aria-label="Number of players"></div>
-          </fieldset>
-
-          <div class="model-lockup">
-            <label class="field-label" for="model-select">Model</label>
-            <select id="model-select" class="select-control model-select" aria-describedby="model-note"></select>
-            <label class="search-toggle"><input id="web-search-toggle" type="checkbox" checked><span>Back up answers with web search</span></label>
-            <p class="helper-text" id="model-note">Checking the server roster…</p>
+          <div class="sidebar-block">
+            <label for="mode-select" class="field-label">GAME MODE</label>
+            <select id="mode-select" class="select-field"></select>
           </div>
 
-          <div class="context-readout" aria-live="polite">
-            <span>YOUR SETUP</span>
-            <strong id="context-summary">Catan · Standard · 4 players</strong>
+          <div class="sidebar-block">
+            <span class="field-label">PLAYER COUNT</span>
+            <div id="player-options" class="player-chips"></div>
+          </div>
+
+          <div class="sidebar-block">
+            <label for="model-select" class="field-label">AI COMPANION</label>
+            <select id="model-select" class="select-field"></select>
+            <div id="model-note" class="field-hint"></div>
+          </div>
+
+          <div class="sidebar-block">
+            <label class="toggle-control">
+              <input type="checkbox" id="web-search-toggle" checked />
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Grounded Web Search</span>
+            </label>
+          </div>
+
+          <div class="sidebar-block session-info">
+            <div class="session-label">CURRENT TABLE CONTEXT</div>
+            <div id="context-summary" class="session-val">Loading…</div>
+          </div>
+
+          <!-- History Drawer in Sidebar -->
+          <div class="sidebar-block history-block" id="history-panel">
+            <div class="history-panel-header">
+              <span>📜 PAST SESSIONS (NEON)</span>
+            </div>
+            <div id="history-list" class="history-list">
+              <div class="history-empty">Sign in to sync past game sessions.</div>
+            </div>
           </div>
         </aside>
 
-        <section class="chat-panel" aria-labelledby="chat-heading">
-          <div class="chat-header">
-            <div>
-              <span class="panel-number">02</span>
-              <h2 id="chat-heading">Ask QuestMind</h2>
+        <section class="chat-stage">
+          <div class="chat-stage-header">
+            <div class="stage-title">
+              <span class="section-num">02</span>
+              <h2>Ask QuestMind</h2>
             </div>
-            <span class="chat-count" id="chat-count">01 MESSAGE</span>
+            <div class="chat-stats">
+              <span id="chat-count">01 MESSAGES</span>
+            </div>
           </div>
 
-          <div class="message-stream" id="message-stream" aria-live="polite">
+          <div class="message-stream" id="message-stream" role="log" aria-live="polite">
             <article class="message message-assistant">
-              <div class="message-meta"><span class="avatar">Q</span><span>QUESTMIND</span><time>JUST NOW</time></div>
+              <div class="message-meta">
+                <span class="avatar">Q</span>
+                <span>QUESTMIND</span>
+                <time>JUST NOW</time>
+              </div>
               <p>Ready when you are. Ask about a rule, a turn, or the shape of your next move.</p>
             </article>
           </div>
 
-          <div class="composer-wrap">
-            <div class="attachment-strip" id="attachment-strip" aria-live="polite"></div>
-            <form class="composer" id="composer">
-              <input id="image-input" type="file" accept="image/*" multiple hidden />
-              <button class="icon-button" type="button" id="attach-button" aria-label="Attach an image" title="Attach an image">+</button>
-              <label class="sr-only" for="question-input">Your question</label>
-              <textarea id="question-input" rows="1" placeholder="Ask about a rule or your next move…" required></textarea>
-              <button class="send-button" type="submit"><span>SEND</span><span aria-hidden="true">↗</span></button>
-            </form>
-            <p class="composer-note" id="composer-note">TIP: Include the exact card, phase, or rulebook line you’re looking at.</p>
-          </div>
+          <form class="composer" id="composer">
+            <div class="composer-strip" id="attachment-strip"></div>
+            <div class="composer-row">
+              <input
+                type="text"
+                id="question-input"
+                class="composer-input"
+                placeholder="Ask about a rule, a card power, combat, or turn options…"
+                autocomplete="off"
+                required
+              />
+              <input type="file" id="image-input" accept="image/*" multiple hidden />
+              <button type="button" class="btn-icon" id="attach-button" title="Attach board image or card picture">
+                📷
+              </button>
+              <button type="submit" class="send-button">
+                <span>SEND</span>
+              </button>
+            </div>
+            <div class="composer-footer">
+              <span id="composer-note" class="composer-status">READY / TABLE-SIDE AI</span>
+            </div>
+          </form>
         </section>
-      </div>
       </section>
-      <footer class="footer-note"><span>QM / 001</span><span>BUILT FOR THE TABLE</span><span>© QUESTMIND</span></footer>
     </main>
-    <script type="module" src="./src/ui.js"></script>
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="auth-modal-overlay" hidden>
+      <div class="auth-modal-card">
+        <div class="auth-modal-header">
+          <div class="auth-header-title">
+            <span class="auth-icon">⚡</span>
+            <div>
+              <h2 id="auth-title">Neon Player Account</h2>
+              <p>Cloud Save & Session Sync via Neon PostgreSQL</p>
+            </div>
+          </div>
+          <button type="button" class="auth-close-btn" id="auth-close">✕</button>
+        </div>
+
+        <div id="auth-alert" class="auth-alert" hidden></div>
+
+        <!-- AUTH TABS -->
+        <div class="auth-tabs" id="auth-tabs">
+          <button type="button" class="auth-tab is-active" data-auth-mode="google">Google OAuth</button>
+          <button type="button" class="auth-tab" data-auth-mode="signIn">Sign In</button>
+          <button type="button" class="auth-tab" data-auth-mode="signUp">Create Account</button>
+        </div>
+
+        <!-- GOOGLE OAUTH TAB -->
+        <div id="tab-google" class="auth-tab-content">
+          <p class="auth-description">
+            Sign in with your Google account. Your tabletop match history, rule bookmarks, and companion sessions are automatically synchronized to your Neon PostgreSQL database.
+          </p>
+          <button type="button" class="btn-google-oauth" id="btn-google-signin">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M21.35 12.23c0-.73-.07-1.43-.2-2.1H12v3.98h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.7 2.91-4.2 2.91-7.27Z" />
+              <path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.6Z" />
+              <path fill="#FBBC05" d="M6.54 13.7A5.86 5.86 0 0 1 6.23 12c0-.59.1-1.17.31-1.7V7.77H3.3A9.73 9.73 0 0 0 2.27 12c0 1.57.38 3.06 1.03 4.23l3.24-2.53Z" />
+              <path fill="#EA4335" d="M12 6.27c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 3.35 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.7 5.37l3.24 2.53C7.31 7.99 9.46 6.27 12 6.27Z" />
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+        </div>
+
+        <!-- EMAIL SIGN IN / SIGN UP FORM -->
+        <form id="auth-form" class="auth-form" hidden>
+          <div class="form-group" id="group-name" hidden>
+            <label for="auth-name" class="field-label">PLAYER / CAPTAIN NAME</label>
+            <input type="text" id="auth-name" class="auth-input" placeholder="e.g. Alex" />
+          </div>
+
+          <div class="form-group">
+            <label for="auth-email" class="field-label">EMAIL ADDRESS</label>
+            <input type="email" id="auth-email" class="auth-input" placeholder="player@tabletop.dev" required />
+          </div>
+
+          <div class="form-group">
+            <label for="auth-password" class="field-label">PASSWORD</label>
+            <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" minlength="6" required />
+          </div>
+
+          <button type="submit" class="btn-auth-submit" id="btn-auth-submit">
+            ⚡ SIGN IN
+          </button>
+        </form>
+
+        <!-- SIGNED IN VIEW -->
+        <div id="auth-profile" class="auth-profile" hidden>
+          <div class="profile-card">
+            <div class="profile-avatar" id="profile-avatar">P</div>
+            <div class="profile-info">
+              <h3 id="profile-name">Player</h3>
+              <p id="profile-email">player@tabletop.dev</p>
+              <span class="profile-badge">☁️ NEON POSTGRESQL CONNECTED</span>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button type="button" class="btn-signout" id="btn-signout">Sign Out</button>
+            <button type="button" class="btn-return" id="btn-return">Return to Table</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/ui.js"></script>
   </body>
 </html>
