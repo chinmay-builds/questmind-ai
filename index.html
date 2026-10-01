@@ -375,6 +375,46 @@
       </div>
     </div>
 
+    <!-- TABLETOP ARTICLE DISPATCH READER MODAL -->
+    <div id="article-modal" class="auth-modal-overlay" hidden>
+      <div class="auth-modal-card article-modal-card">
+        <div class="auth-modal-header">
+          <div class="auth-header-title">
+            <span class="article-modal-publisher-logo" id="article-modal-logo">🦅</span>
+            <div>
+              <h2 id="article-modal-publisher-name">Stonemaier Games</h2>
+              <p id="article-modal-domain-date">stonemaiergames.com · October 2026</p>
+            </div>
+          </div>
+          <button type="button" class="auth-close-btn" id="article-modal-close">✕</button>
+        </div>
+
+        <div class="article-modal-media">
+          <img id="article-modal-img" src="" alt="" />
+          <span class="news-tag-pill" id="article-modal-tag">Official Announcement</span>
+        </div>
+
+        <div class="article-modal-content">
+          <div class="article-modal-badges">
+            <span class="news-game-tag" id="article-modal-game">Euphoria</span>
+            <span class="news-rating-tag" id="article-modal-rating">Family Friendly</span>
+          </div>
+          <h1 class="article-modal-title" id="article-modal-title">Article Title</h1>
+          <p class="article-modal-summary" id="article-modal-summary"></p>
+          <div class="article-modal-body" id="article-modal-body"></div>
+        </div>
+
+        <div class="article-modal-actions">
+          <a id="article-modal-visit-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary btn-article-visit">
+            <span>VISIT OFFICIAL PUBLISHER PAGE</span> <span>↗</span>
+          </a>
+          <button type="button" class="btn-secondary" id="article-modal-ask-btn">
+            <span>💬 ASK COMPANION ABOUT THIS GAME</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="/src/ui.js"></script>
   </body>
 </html>

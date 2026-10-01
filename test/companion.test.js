@@ -466,6 +466,27 @@ test("getNewsPage supports deep paging across 10,000,000+ cards with search and 
   assert.ok(expansionResult.items.every((c) => c.category === "expansion"));
 });
 
+test("news cards resolve to specific game URL on publisher site (e.g. Euphoria on Stonemaier Games)", async () => {
+  const { generateNewsCard, gamesCatalog } = await import("../src/news.js");
+  const euphoriaGame = gamesCatalog.find((g) => g.name === "Euphoria");
+  assert.ok(euphoriaGame);
+
+  const card = generateNewsCard(0, "", [], euphoriaGame);
+  assert.equal(card.game, "Euphoria");
+  assert.equal(card.publisher, "Stonemaier Games");
+  assert.equal(card.sourceDomain, "stonemaiergames.com");
+  assert.equal(card.sourceUrl, "https://stonemaiergames.com/games/euphoria/");
+  assert.ok(card.articleBody.includes("stonemaiergames.com"));
+
+  const scytheGame = gamesCatalog.find((g) => g.name === "Scythe");
+  const scytheCard = generateNewsCard(1, "", [], scytheGame);
+  assert.equal(scytheCard.sourceUrl, "https://stonemaiergames.com/games/scythe/");
+
+  const ttrGame = gamesCatalog.find((g) => g.name === "Ticket to Ride");
+  const ttrCard = generateNewsCard(2, "", [], ttrGame);
+  assert.equal(ttrCard.sourceUrl, "https://www.daysofwonder.com/tickettoride/");
+});
+
 function createTestResponse() {
   return {
     statusCode: 200,

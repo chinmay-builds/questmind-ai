@@ -36,35 +36,45 @@ export const publishers = [
   { name: "The Dice Tower", domain: "dicetower.com", logo: "🗼", url: "https://www.dicetower.com/news" },
 ];
 
-// Rich Tabletop Games Database
+// Rich Tabletop Games Database with Exact Official Publisher Game URLs
 export const gamesCatalog = [
-  { name: "Catan", publisher: "Catan Studio", theme: "island trading and settlement building", component: "wooden roads and hex tiles" },
-  { name: "Wingspan", publisher: "Stonemaier Games", theme: "wildlife bird sanctuary preservation", component: "pastel bird eggs and dice tower feeder" },
-  { name: "Scythe", publisher: "Stonemaier Games", theme: "alternate-history countryside exploration", component: "dual-layer faction mats and mech miniatures" },
-  { name: "Everdell", publisher: "Starling Games", theme: "charming forest critter civilization", component: "3D cardboard Ever Tree and resin resource berries" },
-  { name: "Root", publisher: "Leder Games", theme: "asymmetric woodland factions in harmony", component: "screen-printed animal meeples and clearing maps" },
-  { name: "Ticket to Ride", publisher: "Days of Wonder", theme: "cross-country railway expeditions", component: "colored train cars and destination cards" },
-  { name: "Azul", publisher: "Plan B Games", theme: "royal palace geometric mosaic crafting", component: "embossed resin tiles and drafting factories" },
-  { name: "Carcassonne", publisher: "Hans im Glück", theme: "medieval landscape and castle architecture", component: "wooden meeples and river landscape tiles" },
-  { name: "Dune: Imperium", publisher: "Dire Wolf Digital", theme: "desert spice trade and tactical deckbuilding", component: "wooden troop cubes and intrigue decks" },
-  { name: "7 Wonders", publisher: "Repos Production", theme: "ancient world wonder construction", component: "drafting cards and wonder stage boards" },
-  { name: "Spirit Island", publisher: "Greater Than Games", theme: "elemental guardian nature defense", component: "presence tokens and fear card decks" },
-  { name: "Gloomhaven", publisher: "Cephalofair Games", theme: "tactical dungeon exploration and cooperative quests", component: "modifier decks and map hex tiles" },
-  { name: "Terraforming Mars", publisher: "FryxGames", theme: "planetary engineering and oxygen habitat creation", component: "metallic resource cubes and project cards" },
-  { name: "Ark Nova", publisher: "Feuerland Spiele", theme: "modern zoo wildlife conservation", component: "animal sponsor cards and enclosure tiles" },
-  { name: "The Crew", publisher: "Kosmos", theme: "cooperative trick-taking deep sea & space voyages", component: "communication tokens and task logbooks" },
-  { name: "Dominion", publisher: "Rio Grande Games", theme: "kingdom deck construction and royal estates", component: "treasure kingdom card stacks" },
-  { name: "Mansions of Madness", publisher: "Fantasy Flight Games", theme: "atmospheric mystery solving and puzzle locks", component: "investigator figures and map tiles" },
-  { name: "Betrayal at House on the Hill", publisher: "Renegade Game Studios", theme: "spooky mansion exploration and secret haunts", component: "room tiles and character stat sliders" },
-  { name: "Cascadia", publisher: "Flatout Games", theme: "Pacific Northwest wildlife habitat creation", component: "wooden wildlife tokens and dual habitat tiles" },
-  { name: "Splendor", publisher: "Space Cowboys", theme: "Renaissance gem merchant prestige trading", component: "heavyweight poker gem chips" },
-  { name: "Patchwork", publisher: "Lookout Games", theme: "cozy quilt stitching and button currency", component: "pattern polyomino patches and wooden spools" },
-  { name: "Pandemic", publisher: "Z-Man Games", theme: "global scientist cooperation and outbreak cure", component: "treatment cubes and disease cure vials" },
-  { name: "Clank!", publisher: "Dire Wolf Digital", theme: "stealth dungeon delving and dragon artifacts", component: "dragon bag and clank cubes" },
-  { name: "Brass: Birmingham", publisher: "Devir Games", theme: "industrial canal and railway transport networks", component: "brewery barrels and iron coal cubes" },
-  { name: "Wyrmspan", publisher: "Stonemaier Games", theme: "dragon sanctuary exploration and cave nesting", component: "dragon egg miniatures and cave mats" },
-  { name: "Heat: Pedal to the Metal", publisher: "Days of Wonder", theme: "1960s Grand Prix championship racing", component: "gearshift levers and weather condition cards" },
-  { name: "Flamecraft", publisher: "Starling Games", theme: "tiny artisan dragons baking and crafting in village shops", component: "neoprene town mat and tiny dragon miniatures" },
+  { name: "Euphoria", publisher: "Stonemaier Games", theme: "dystopian worker placement and knowledge management", component: "custom commodity dice and worker meeples", officialUrl: "https://stonemaiergames.com/games/euphoria/" },
+  { name: "Wingspan", publisher: "Stonemaier Games", theme: "wildlife bird sanctuary preservation", component: "pastel bird eggs and dice tower feeder", officialUrl: "https://stonemaiergames.com/games/wingspan/" },
+  { name: "Scythe", publisher: "Stonemaier Games", theme: "alternate-history countryside exploration", component: "dual-layer faction mats and mech miniatures", officialUrl: "https://stonemaiergames.com/games/scythe/" },
+  { name: "Wyrmspan", publisher: "Stonemaier Games", theme: "dragon sanctuary exploration and cave nesting", component: "dragon egg miniatures and cave mats", officialUrl: "https://stonemaiergames.com/games/wyrmspan/" },
+  { name: "Viticulture", publisher: "Stonemaier Games", theme: "Tuscan vineyard winemaking and estate building", component: "wooden grape tokens and visitor cards", officialUrl: "https://stonemaiergames.com/games/viticulture/" },
+  { name: "Tapestry", publisher: "Stonemaier Games", theme: "civilization advancement and landmark construction", component: "pre-painted landmark miniatures and tech tracks", officialUrl: "https://stonemaiergames.com/games/tapestry/" },
+  { name: "Expeditions", publisher: "Stonemaier Games", theme: "Siberian meteorite exploration and mech cards", component: "mech figures and corruption tiles", officialUrl: "https://stonemaiergames.com/games/expeditions/" },
+  { name: "Apiary", publisher: "Stonemaier Games", theme: "space-faring honeybees and hive expansion", component: "worker bee miniatures and hive tiles", officialUrl: "https://stonemaiergames.com/games/apiary/" },
+  { name: "Catan", publisher: "Catan Studio", theme: "island trading and settlement building", component: "wooden roads and hex tiles", officialUrl: "https://www.catan.com/catan-fans/news" },
+  { name: "Everdell", publisher: "Starling Games", theme: "charming forest critter civilization", component: "3D cardboard Ever Tree and resin resource berries", officialUrl: "https://www.tabletoptycoon.com/collections/everdell" },
+  { name: "Root", publisher: "Leder Games", theme: "asymmetric woodland factions in harmony", component: "screen-printed animal meeples and clearing maps", officialUrl: "https://ledergames.com/collections/root" },
+  { name: "Arcs", publisher: "Leder Games", theme: "space opera trick-taking and galactic campaigns", component: "wooden starships and court deck cards", officialUrl: "https://ledergames.com/collections/arcs" },
+  { name: "Oath", publisher: "Leder Games", theme: "chronicles of empire and generational legacy", component: "wooden warbands and neoprene chronicle mat", officialUrl: "https://ledergames.com/collections/oath" },
+  { name: "Ticket to Ride", publisher: "Days of Wonder", theme: "cross-country railway expeditions", component: "colored train cars and destination cards", officialUrl: "https://www.daysofwonder.com/tickettoride/" },
+  { name: "Heat: Pedal to the Metal", publisher: "Days of Wonder", theme: "1960s Grand Prix championship racing", component: "gearshift levers and weather condition cards", officialUrl: "https://www.daysofwonder.com/heat/" },
+  { name: "Azul", publisher: "Plan B Games", theme: "royal palace geometric mosaic crafting", component: "embossed resin tiles and drafting factories", officialUrl: "https://planbgames.com/azul" },
+  { name: "Carcassonne", publisher: "Hans im Glück", theme: "medieval landscape and castle architecture", component: "wooden meeples and river landscape tiles", officialUrl: "https://www.hans-im-glueck.de/en/games/carcassonne.html" },
+  { name: "Dune: Imperium", publisher: "Dire Wolf Digital", theme: "desert spice trade and tactical deckbuilding", component: "wooden troop cubes and intrigue decks", officialUrl: "https://www.direwolfdigital.com/dune-imperium/" },
+  { name: "Clank!", publisher: "Dire Wolf Digital", theme: "stealth dungeon delving and dragon artifacts", component: "dragon bag and clank cubes", officialUrl: "https://www.direwolfdigital.com/clank/" },
+  { name: "7 Wonders", publisher: "Repos Production", theme: "ancient world wonder construction", component: "drafting cards and wonder stage boards", officialUrl: "https://www.rprod.com/en/games/7-wonders" },
+  { name: "Spirit Island", publisher: "Greater Than Games", theme: "elemental guardian nature defense", component: "presence tokens and fear card decks", officialUrl: "https://greaterthangames.com/product-category/board-games/spirit-island/" },
+  { name: "Gloomhaven", publisher: "Cephalofair Games", theme: "tactical dungeon exploration and cooperative quests", component: "modifier decks and map hex tiles", officialUrl: "https://cephalofair.com/pages/gloomhaven" },
+  { name: "Frosthaven", publisher: "Cephalofair Games", theme: "frozen outpost building and survival campaigns", component: "loot decks and alchemy charts", officialUrl: "https://cephalofair.com/pages/frosthaven" },
+  { name: "Terraforming Mars", publisher: "FryxGames", theme: "planetary engineering and oxygen habitat creation", component: "metallic resource cubes and project cards", officialUrl: "https://www.fryxgames.se/games/terraforming-mars/" },
+  { name: "Ark Nova", publisher: "Feuerland Spiele", theme: "modern zoo wildlife conservation", component: "animal sponsor cards and enclosure tiles", officialUrl: "https://www.feuerland-spiele.de/en/ark_nova.php" },
+  { name: "The Crew", publisher: "Kosmos", theme: "cooperative trick-taking deep sea & space voyages", component: "communication tokens and task logbooks", officialUrl: "https://www.kosmosgames.co.uk/product-category/the-crew/" },
+  { name: "Dominion", publisher: "Rio Grande Games", theme: "kingdom deck construction and royal estates", component: "treasure kingdom card stacks", officialUrl: "https://www.riograndegames.com/games/dominion/" },
+  { name: "Mansions of Madness", publisher: "Fantasy Flight Games", theme: "atmospheric mystery solving and puzzle locks", component: "investigator figures and map tiles", officialUrl: "https://www.fantasyflightgames.com/en/products/mansions-of-madness-second-edition/" },
+  { name: "Betrayal at House on the Hill", publisher: "Renegade Game Studios", theme: "spooky mansion exploration and secret haunts", component: "room tiles and character stat sliders", officialUrl: "https://renegadegamestudios.com/betrayal-at-house-on-the-hill-3rd-edition/" },
+  { name: "Cascadia", publisher: "Flatout Games", theme: "Pacific Northwest wildlife habitat creation", component: "wooden wildlife tokens and dual habitat tiles", officialUrl: "https://www.flatout.games/cascadia" },
+  { name: "Splendor", publisher: "Space Cowboys", theme: "Renaissance gem merchant prestige trading", component: "heavyweight poker gem chips", officialUrl: "https://www.spacecowboys.fr/splendor" },
+  { name: "Patchwork", publisher: "Lookout Games", theme: "cozy quilt stitching and button currency", component: "pattern polyomino patches and wooden spools", officialUrl: "https://lookout-spiele.de/en/games/patchwork.html" },
+  { name: "Pandemic", publisher: "Z-Man Games", theme: "global scientist cooperation and outbreak cure", component: "treatment cubes and disease cure vials", officialUrl: "https://www.zmangames.com/en/products/pandemic/" },
+  { name: "Brass: Birmingham", publisher: "Devir Games", theme: "industrial canal and railway transport networks", component: "brewery barrels and iron coal cubes", officialUrl: "https://devir.com/games/brass-birmingham" },
+  { name: "Flamecraft", publisher: "Starling Games", theme: "tiny artisan dragons baking and crafting in village shops", component: "neoprene town mat and tiny dragon miniatures", officialUrl: "https://www.tabletoptycoon.com/collections/flamecraft" },
+  { name: "Lost Ruins of Arnak", publisher: "Czech Games Edition", theme: "island jungle expedition and ancient ruins", component: "archaeologist figures and discovery tiles", officialUrl: "https://czechgames.com/en/lost-ruins-of-arnak/" },
+  { name: "Codenames", publisher: "Czech Games Edition", theme: "secret agent word association puzzles", component: "codenames key cards and timer sandglass", officialUrl: "https://czechgames.com/en/codenames/" },
 ];
 
 // Curated high-resolution tabletop photography images (family-friendly, board games, dice, meeples, cards)
@@ -232,6 +242,20 @@ export function generateNewsCard(index, activeGame = "", chatHistory = [], expli
   const title = format.title(game, pubMatch, index);
   const summary = format.summary(game, pubMatch, index);
 
+  // Exact target URL: deep link directly to the game's page on the publisher website
+  const sourceUrl = game.officialUrl || pubMatch.url || `https://${pubMatch.domain}`;
+
+  // Rich full-length article story for in-app reader modal
+  const articleBody = `
+    <p><strong>${pubMatch.name}</strong> has announced a premier update for <strong>${game.name}</strong>, their celebrated title centered on ${game.theme}.</p>
+    <p>${summary}</p>
+    <p>Strategists and families will delight in the upgraded tactile components including premium <strong>${game.component}</strong>, balanced turn mechanics, and streamlined rule explanations suited for both beginners and tabletop veterans.</p>
+    <div class="article-quote-box">
+      <p>"Our focus has always been crafting memorable game nights where kids and parents alike can build unforgettable memories together," stated the publishing team at ${pubMatch.name}.</p>
+    </div>
+    <p>You can explore full product catalogs, rules PDFs, component galleries, and official store listings directly on the official <strong>${pubMatch.name}</strong> website at <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer">${pubMatch.domain}</a>.</p>
+  `;
+
   // Calculate personalization score if active game or chat matches
   let personalizationScore = 0;
   if (activeGame && game.name.toLowerCase() === activeGame.toLowerCase()) {
@@ -253,9 +277,10 @@ export function generateNewsCard(index, activeGame = "", chatHistory = [], expli
     game: game.name,
     title,
     summary,
+    articleBody,
     publisher: pubMatch.name,
     publisherLogo: pubMatch.logo,
-    sourceUrl: pubMatch.url,
+    sourceUrl,
     sourceDomain: pubMatch.domain,
     imageUrl: curatedImages[imageIndex],
     tag: format.tag,

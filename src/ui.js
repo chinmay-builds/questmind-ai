@@ -54,6 +54,23 @@ const btnLoadMore = document.querySelector("#btn-load-more");
 const btnRandomPage = document.querySelector("#btn-random-page");
 const btnTopPage = document.querySelector("#btn-top-page");
 
+// Article Reader Modal Elements
+const articleModal = document.querySelector("#article-modal");
+const articleModalClose = document.querySelector("#article-modal-close");
+const articleModalLogo = document.querySelector("#article-modal-logo");
+const articleModalPubName = document.querySelector("#article-modal-publisher-name");
+const articleModalDomainDate = document.querySelector("#article-modal-domain-date");
+const articleModalImg = document.querySelector("#article-modal-img");
+const articleModalTag = document.querySelector("#article-modal-tag");
+const articleModalGame = document.querySelector("#article-modal-game");
+const articleModalRating = document.querySelector("#article-modal-rating");
+const articleModalTitle = document.querySelector("#article-modal-title");
+const articleModalSummary = document.querySelector("#article-modal-summary");
+const articleModalBody = document.querySelector("#article-modal-body");
+const articleModalVisitBtn = document.querySelector("#article-modal-visit-btn");
+const articleModalAskBtn = document.querySelector("#article-modal-ask-btn");
+let activeArticleItem = null;
+
 // Auth Elements
 const authModal = document.querySelector("#auth-modal");
 const authButton = document.querySelector("#auth-button");
@@ -350,6 +367,54 @@ composer.addEventListener("submit", async (event) => {
   }
 });
 
+// ── ARTICLE DISPATCH MODAL ──
+
+function openArticleModal(item) {
+  activeArticleItem = item;
+  if (articleModalLogo) articleModalLogo.textContent = item.publisherLogo;
+  if (articleModalPubName) articleModalPubName.textContent = item.publisher;
+  if (articleModalDomainDate) articleModalDomainDate.textContent = `${item.sourceDomain} · ${item.date}`;
+  if (articleModalImg) {
+    articleModalImg.src = item.imageUrl;
+    articleModalImg.alt = item.title;
+  }
+  if (articleModalTag) articleModalTag.textContent = item.tag;
+  if (articleModalGame) articleModalGame.textContent = item.game;
+  if (articleModalRating) articleModalRating.textContent = item.rating;
+  if (articleModalTitle) articleModalTitle.textContent = item.title;
+  if (articleModalSummary) articleModalSummary.textContent = item.summary;
+  if (articleModalBody) articleModalBody.innerHTML = item.articleBody || `<p>${item.summary}</p>`;
+  if (articleModalVisitBtn) {
+    articleModalVisitBtn.href = item.sourceUrl;
+    articleModalVisitBtn.innerHTML = `<span>VISIT OFFICIAL ${item.publisher.toUpperCase()} PAGE</span> <span>↗</span>`;
+  }
+  if (articleModal) articleModal.hidden = false;
+}
+
+function closeArticleModal() {
+  if (articleModal) articleModal.hidden = true;
+}
+
+articleModalClose?.addEventListener("click", closeArticleModal);
+articleModal?.addEventListener("click", (e) => {
+  if (e.target === articleModal) closeArticleModal();
+});
+
+articleModalAskBtn?.addEventListener("click", () => {
+  if (activeArticleItem) {
+    const exists = Array.from(gameSelect.options).some((opt) => opt.value.toLowerCase() === activeArticleItem.game.toLowerCase());
+    if (!exists) {
+      gameSelect.add(new Option(activeArticleItem.game, activeArticleItem.game));
+    }
+    gameSelect.value = activeArticleItem.game;
+    updateContext();
+    closeArticleModal();
+    history.pushState(null, "", "#chat");
+    showRoute();
+    questionInput.focus();
+  }
+});
+
 // ── NEWS FEED RENDERING ──
 
 function createNewsCardElement(item) {
@@ -363,12 +428,12 @@ function createNewsCardElement(item) {
       </div>
       <span class="publisher-domain">${item.sourceDomain}</span>
     </div>
-    <div class="news-card-media">
+    <div class="news-card-media" role="button" tabindex="0" title="Read story: ${item.title}">
       <img src="${item.imageUrl}" alt="${item.title}" loading="lazy" />
       <span class="news-tag-pill">${item.tag}</span>
     </div>
     <div class="news-card-body">
-      <h3 class="news-card-title">${item.title}</h3>
+      <h3 class="news-card-title" role="button" tabindex="0" title="Read full story">${item.title}</h3>
       <p class="news-card-summary">${item.summary}</p>
       <div class="news-card-footer">
         <div class="news-meta-left">
@@ -376,12 +441,20 @@ function createNewsCardElement(item) {
           <span class="news-date">${item.date}</span>
           <span class="news-rating-tag">${item.rating}</span>
         </div>
-        <a href="${item.sourceUrl}" target="_blank" rel="noopener noreferrer" class="btn-read-source">
-          VISIT ${item.sourceDomain.toUpperCase()} <span>↗</span>
-        </a>
+        <div class="news-card-buttons">
+          <button type="button" class="btn-read-story" title="Read story dispatch">STORY</button>
+          <a href="${item.sourceUrl}" target="_blank" rel="noopener noreferrer" class="btn-read-source" title="Open exact page on ${item.sourceDomain}">
+            VISIT ${item.sourceDomain.toUpperCase()} <span>↗</span>
+          </a>
+        </div>
       </div>
     </div>
   `;
+
+  card.querySelector(".news-card-title")?.addEventListener("click", () => openArticleModal(item));
+  card.querySelector(".news-card-media")?.addEventListener("click", () => openArticleModal(item));
+  card.querySelector(".btn-read-story")?.addEventListener("click", () => openArticleModal(item));
+
   return card;
 }
 
