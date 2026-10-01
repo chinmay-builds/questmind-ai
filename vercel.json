@@ -1,9 +1,32 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "favicon.svg", "use": "@vercel/static" },
+    { "src": "favicon.png", "use": "@vercel/static" },
+    { "src": "favicon.ico", "use": "@vercel/static" },
+    { "src": "src/**", "use": "@vercel/static" },
+    { "src": "api/ask.js", "use": "@vercel/node" },
+    { "src": "api/config.js", "use": "@vercel/node" },
+    { "src": "api/models.js", "use": "@vercel/node" },
+    { "src": "api/sessions.js", "use": "@vercel/node" },
+    { "src": "api/auth.js", "use": "@vercel/node" }
+  ],
   "rewrites": [
     {
       "source": "/api/auth/:match*",
       "destination": "https://ep-lucky-wave-zauejsfo.neonauth.c-2.eu-west-2.aws.neon.tech/neondb/auth/:match*"
-    }
+    },
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/api/ask", "destination": "/api/ask.js" },
+    { "source": "/api/config", "destination": "/api/config.js" },
+    { "source": "/api/models", "destination": "/api/models.js" },
+    { "source": "/api/sessions", "destination": "/api/sessions.js" }
+  ],
+  "redirects": [
+    { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": false },
+    { "source": "/favicon.png", "destination": "/favicon.svg", "permanent": false }
   ]
 }
