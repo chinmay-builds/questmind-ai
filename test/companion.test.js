@@ -5,7 +5,7 @@ import { askQuestMind } from "../src/core/api.js";
 import { createProvider } from "../src/core/providers/index.js";
 import { providerNameFromEnv } from "../src/core/config.js";
 import { modelConfigFromEnv, resolveModelAlias } from "../src/core/config.js";
-import { getPlayerOptions } from "../src/games.js";
+import { getGame, getPlayerOptions } from "../src/games.js";
 import { getRuleContext } from "../src/rules.js";
 import { createOpenRouterProvider } from "../src/core/providers/openrouter.js";
 import { InvalidQuestRequestError, ProviderConfigurationError, ProviderRequestError, UnsupportedProviderError } from "../src/core/errors.js";
@@ -40,12 +40,12 @@ test("includes the selected context and attachment count in the UI response", ()
   assert.match(
     askQuestMind({
       game: "Scythe",
-      mode: "Automa",
+      mode: "Normal",
       playerCount: 2,
       question: "What should I do next?",
       attachments: [{ name: "board.png", type: "image/png" }, { name: "card.jpg", type: "image/jpeg" }],
     }, { provider: "mock" }).text,
-    /Scythe · Automa · 2 players[\s\S]*2 attached images/,
+    /Scythe[\s\S]*2 players[\s\S]*2 attached images/,
   );
 });
 
@@ -78,8 +78,27 @@ test("resolves safe model aliases without exposing secrets", () => {
 });
 
 test("enforces game and mode-specific player bounds", () => {
-  assert.deepEqual(getPlayerOptions({ playerOptions: [1, 2, 3, 4] }, "Solo / Clockwork"), [1]);
-  assert.deepEqual(getPlayerOptions({ playerOptions: [2, 3, 4] }, "Two-player"), [2]);
+  const scythe = getGame("Scythe");
+  assert.deepEqual(getPlayerOptions(scythe, "Normal"), [2, 3, 4, 5]);
+  assert.deepEqual(getPlayerOptions(scythe, "Automa"), [1]);
+
+  const wingspan = getGame("Wingspan");
+  assert.deepEqual(getPlayerOptions(wingspan, "Base Game"), [2, 3, 4, 5]);
+  assert.deepEqual(getPlayerOptions(wingspan, "Solo / Automa"), [1]);
+
+  const root = getGame("Root");
+  assert.deepEqual(getPlayerOptions(root, "Competitive"), [2, 3, 4]);
+  assert.deepEqual(getPlayerOptions(root, "Solo / Clockwork"), [1]);
+  assert.deepEqual(getPlayerOptions(root, "Two-player"), [2]);
+
+  const gloomhaven = getGame("Gloomhaven");
+  assert.deepEqual(getPlayerOptions(gloomhaven, "Campaign"), [2, 3, 4]);
+  assert.deepEqual(getPlayerOptions(gloomhaven, "Solo scenario"), [1]);
+
+  const tfm = getGame("Terraforming Mars");
+  assert.deepEqual(getPlayerOptions(tfm, "Standard"), [2, 3, 4, 5]);
+  assert.deepEqual(getPlayerOptions(tfm, "Solo challenge"), [1]);
+
   assert.throws(() => askQuestMind({ game: "Catan", mode: "Standard", playerCount: 2, question: "Help" }, { provider: "mock" }), InvalidQuestRequestError);
 });
 
@@ -133,7 +152,7 @@ test("normalizes an OpenRouter response and sends context without exposing brows
   const result = await provider.answer({
     game: "Scythe",
     mode: "Automa",
-    playerCount: 2,
+    playerCount: 1,
     question: "What should I do?",
     attachments: [{ name: "board.png", type: "image/png" }],
   });

@@ -60,17 +60,20 @@ for (const game of games) {
 }
 
 function renderPlayers(game) {
+  const current = Number(playerOptions.querySelector("input:checked")?.value ?? 4);
   playerOptions.replaceChildren();
-  for (const count of getPlayerOptions(game, modeSelect.value)) {
+  const options = getPlayerOptions(game, modeSelect.value);
+  const preferred = options.includes(current) ? current : options[0];
+  for (const count of options) {
     const label = document.createElement("label");
     label.className = "player-option";
-    label.innerHTML = `<input type="radio" name="players" value="${count}" ${count === 4 ? "checked" : ""}><span>${count}</span>`;
+    label.innerHTML = `<input type="radio" name="players" value="${count}" ${count === preferred ? "checked" : ""}><span>${count}</span>`;
     playerOptions.append(label);
   }
 }
 
 function selectedPlayers() {
-  return playerOptions.querySelector("input:checked")?.value ?? "4";
+  return playerOptions.querySelector("input:checked")?.value ?? "1";
 }
 
 function updateContext() {
@@ -80,12 +83,7 @@ function updateContext() {
 }
 
 function updatePlayerContext(game = games.find(({ name }) => name === gameSelect.value) ?? games[0]) {
-  const current = Number(selectedPlayers());
   renderPlayers(game);
-  const options = getPlayerOptions(game, modeSelect.value);
-  const preferred = options.includes(current) ? current : options[0];
-  const selected = playerOptions.querySelector(`input[value="${preferred}"]`);
-  if (selected) selected.checked = true;
   contextSummary.textContent = `${game.name} · ${modeSelect.value} · ${selectedPlayers()} ${selectedPlayers() === "1" ? "player" : "players"}`;
 }
 
