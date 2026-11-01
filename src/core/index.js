@@ -22,3 +22,4 @@ export { providerNameFromEnv, providerConfigFromEnv } from "./config.js";
 export { modelAliases, modelConfigFromEnv, resolveModelAlias } from "./config.js";
 export * from "./errors.js";
 export { fallbackResponse } from "./fallback.js";
+export { buildLesson, validateLessonRequest } from "./lessons.js";

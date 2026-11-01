@@ -7,6 +7,7 @@ import modelsHandler from "../api/models.js";
 import configHandler from "../api/config.js";
 import sessionsHandler from "../api/sessions.js";
 import authHandler from "../api/auth.js";
+import lessonHandler from "../api/lesson.js";
 
 try {
   process.loadEnvFile?.();
@@ -46,6 +47,10 @@ const server = createServer(async (request, response) => {
 
   if (pathname === "/api/ask") {
     await askHandler(request, response);
+    return;
+  }
+  if (pathname === "/api/lesson") {
+    await lessonHandler(request, response);
     return;
   }
   if (pathname === "/api/models") {

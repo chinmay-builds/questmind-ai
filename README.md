@@ -112,6 +112,17 @@ statuses (429/5xx). `vercel.json` explicitly builds that function and
 `api/models.js` with `@vercel/node` alongside the static root; redeploy is
 required for the routes and env vars to take effect.
 
+### Follow Along lessons
+
+The Follow Along route (`#learn`) is scenario-first. It requires the player to
+describe what just happened before a lesson is built, then returns a seven-part
+lesson covering the scenario, diagnosis, relevant rule, guided next turn,
+strategy, a decision check, and the next table moment. `POST /api/lesson`
+builds this first lesson locally from `src/rules.js`, so the UI responds
+immediately instead of waiting for a model or web search. The request accepts
+`game`, `mode`, `playerCount`, required `scenario`, and optional `goal` and
+`experience` fields.
+
 ## Answer quality
 
 The OpenRouter system policy requires a concise answer to only the asked

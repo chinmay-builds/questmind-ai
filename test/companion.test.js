@@ -14,6 +14,7 @@ import modelsHandler from "../api/models.js";
 import configHandler from "../api/config.js";
 import { normalizeAssistantResponse } from "../src/core/contracts.js";
 import { fallbackResponse } from "../src/core/fallback.js";
+import { buildLesson, validateLessonRequest } from "../src/core/lessons.js";
 
 test("returns an explicitly marked placeholder answer", () => {
   const response = answerQuestion("Can I draw two cards?");
@@ -33,6 +34,37 @@ test("rejects an empty question", () => {
   assert.throws(() => answerQuestion("   "), {
     name: "TypeError",
     message: "A non-empty game or rules question is required.",
+  });
+
+  test("builds a longer scenario-first follow-along lesson synchronously", () => {
+    const lesson = buildLesson({
+      game: "Catan",
+      mode: "Standard",
+      playerCount: 4,
+      scenario: "I rolled a 6, have brick and wool, and want to settle beside the ore port.",
+      goal: "secure the port before the next player",
+      experience: "I know the basic turn but keep missing placement restrictions",
+    });
+
+    assert.equal(lesson.provider, "local-rules");
+    assert.equal(lesson.sections.length, 7);
+    assert.equal(lesson.context.scenario, "I rolled a 6, have brick and wool, and want to settle beside the ore port.");
+    assert.match(lesson.sections[0].body, /I rolled a 6/);
+    assert.match(lesson.sections.find(({ type }) => type === "guided-turn").body, /placement restrictions|one decision/i);
+    assert.ok(lesson.sections.find(({ type }) => type === "check").options.length >= 3);
+    assert.match(lesson.sections.at(-1).body, /what happened after this decision/i);
+  });
+
+  test("requires a concrete scenario before building a lesson", () => {
+    assert.throws(() => validateLessonRequest({
+      game: "Catan",
+      mode: "Standard",
+      playerCount: 4,
+      scenario: " ",
+    }), {
+      name: "InvalidQuestRequestError",
+      message: "scenario must be a non-empty string.",
+    });
   });
 });
 
