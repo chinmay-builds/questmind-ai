@@ -1,5 +1,6 @@
 import { games, getPlayerOptions } from "./games.js";
 import { askQuestMind } from "./core/api.js";
+import { buildLesson } from "./core/lessons.js";
 import { modelAliases } from "./core/config.js";
 import { fallbackResponse } from "./core/fallback.js";
 import {
@@ -246,10 +247,13 @@ learnForm.addEventListener("submit", async (event) => {
   lessonOutput.replaceChildren();
   const button = learnForm.querySelector("button[type=submit]");
   button.disabled = true;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 8_000);
   try {
     const response = await fetch("/api/lesson", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
       body: JSON.stringify({
         game: learnGameSelect.value,
         mode: learnModeSelect.value,
@@ -264,8 +268,22 @@ learnForm.addEventListener("submit", async (event) => {
     renderLesson(payload);
     lessonStatus.textContent = "READY / CONTINUE FROM YOUR NEXT TABLE MOMENT";
   } catch (error) {
-    lessonStatus.textContent = error.message;
+    if (error?.name === "AbortError") {
+      const localLesson = buildLesson({
+        game: learnGameSelect.value,
+        mode: learnModeSelect.value,
+        playerCount: Number(learnPlayerCount.value),
+        scenario: learnScenario.value,
+        goal: learnGoal.value,
+        experience: learnExperience.value,
+      });
+      renderLesson(localLesson);
+      lessonStatus.textContent = "READY / LOCAL RULES LESSON (SERVER TIMED OUT)";
+    } else {
+      lessonStatus.textContent = error.message;
+    }
   } finally {
+    window.clearTimeout(timeout);
     button.disabled = false;
   }
 });

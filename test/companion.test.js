@@ -65,6 +65,20 @@ test("rejects an empty question", () => {
       name: "InvalidQuestRequestError",
       message: "scenario must be a non-empty string.",
     });
+
+    test("keeps local lesson generation independent of a slow remote provider", () => {
+      const started = Date.now();
+      const lesson = buildLesson({
+        game: "Catan",
+        mode: "Standard",
+        playerCount: 3,
+        scenario: "The other player built beside the port I wanted.",
+      });
+
+      assert.ok(Date.now() - started < 100);
+      assert.equal(lesson.provider, "local-rules");
+      assert.match(lesson.sections[0].body, /other player built beside the port/i);
+    });
   });
 });
 
