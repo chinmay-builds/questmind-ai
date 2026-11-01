@@ -20,6 +20,9 @@
         </div>
       </div>
       <div class="topbar-actions">
+        <a class="route-link nav-btn" href="#learn" data-route="learn">
+          🎓 FOLLOW ALONG
+        </a>
         <a class="route-link nav-btn" href="#feed" data-route="feed" id="topbar-feed-btn">
           📰 NEWS FEED
         </a>
@@ -180,6 +183,48 @@
             <span>⬆ TOP OF FEED</span>
           </button>
         </div>
+      </section>
+
+      <!-- FOLLOW ALONG VIEW -->
+      <section class="view-section learn-view" id="learn-view" hidden>
+        <div class="learn-header">
+          <div class="hero-tag">FOLLOW ALONG MODE</div>
+          <h2 class="feed-title">Learn it at the table.</h2>
+          <p class="feed-subtitle">
+            Tell QuestMind what just happened. It will turn that exact moment into a longer guided lesson instead of guessing at a generic tutorial.
+          </p>
+        </div>
+        <form class="learn-form" id="learn-form">
+          <div class="learn-fields">
+            <div class="sidebar-block">
+              <label for="learn-game-select" class="field-label">BOARD GAME</label>
+              <select id="learn-game-select" class="select-field"></select>
+            </div>
+            <div class="sidebar-block">
+              <label for="learn-mode-select" class="field-label">GAME MODE</label>
+              <select id="learn-mode-select" class="select-field"></select>
+            </div>
+            <div class="sidebar-block">
+              <label for="learn-player-count" class="field-label">PLAYERS</label>
+              <input id="learn-player-count" class="auth-input" type="number" min="1" max="10" value="4" required />
+            </div>
+          </div>
+          <label for="learn-scenario" class="field-label">WHAT HAPPENED?</label>
+          <textarea id="learn-scenario" class="learn-textarea" rows="5" required placeholder="Example: I rolled a 6, have brick and wool, and want to settle beside the ore port, but another player says I cannot."></textarea>
+          <div class="learn-fields">
+            <div>
+              <label for="learn-goal" class="field-label">WHAT WERE YOU TRYING TO DO?</label>
+              <input id="learn-goal" class="auth-input" placeholder="Secure the port before the next player" />
+            </div>
+            <div>
+              <label for="learn-experience" class="field-label">HOW FAMILIAR ARE YOU?</label>
+              <input id="learn-experience" class="auth-input" placeholder="I know the basics but miss placement restrictions" />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary learn-submit"><span>BUILD MY LESSON →</span></button>
+        </form>
+        <div id="lesson-status" class="composer-status" role="status">READY / SCENARIO FIRST</div>
+        <div id="lesson-output" class="lesson-output" aria-live="polite"></div>
       </section>
 
       <!-- CHAT / COMPANION VIEW -->
@@ -390,7 +435,7 @@
         </div>
 
         <div class="article-modal-media">
-          <img id="article-modal-img" src="" alt="" />
+          <img id="article-modal-img" src="/favicon.svg" alt="" />
           <span class="news-tag-pill" id="article-modal-tag">Official Announcement</span>
         </div>
 

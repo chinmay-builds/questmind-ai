@@ -9,6 +9,7 @@
     { "src": "favicon.ico", "use": "@vercel/static" },
     { "src": "src/**", "use": "@vercel/static" },
     { "src": "api/ask.js", "use": "@vercel/node" },
+    { "src": "api/lesson.js", "use": "@vercel/node" },
     { "src": "api/config.js", "use": "@vercel/node" },
     { "src": "api/models.js", "use": "@vercel/node" },
     { "src": "api/sessions.js", "use": "@vercel/node" },
@@ -21,6 +22,7 @@
     },
     { "source": "/", "destination": "/index.html" },
     { "source": "/api/ask", "destination": "/api/ask.js" },
+    { "source": "/api/lesson", "destination": "/api/lesson.js" },
     { "source": "/api/config", "destination": "/api/config.js" },
     { "source": "/api/models", "destination": "/api/models.js" },
     { "source": "/api/sessions", "destination": "/api/sessions.js" }

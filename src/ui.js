@@ -36,6 +36,7 @@ const composerNote = document.querySelector("#composer-note");
 const landingView = document.querySelector("#landing-view");
 const feedView = document.querySelector("#feed-view");
 const chatView = document.querySelector("#chat-view");
+const learnView = document.querySelector("#learn-view");
 const routeLinks = document.querySelectorAll("[data-route]");
 const topbarRoute = document.querySelector("#topbar-route");
 const topbarFeedBtn = document.querySelector("#topbar-feed-btn");
@@ -53,6 +54,15 @@ const feedStatsPage = document.querySelector("#feed-stats-page");
 const btnLoadMore = document.querySelector("#btn-load-more");
 const btnRandomPage = document.querySelector("#btn-random-page");
 const btnTopPage = document.querySelector("#btn-top-page");
+const learnForm = document.querySelector("#learn-form");
+const learnGameSelect = document.querySelector("#learn-game-select");
+const learnModeSelect = document.querySelector("#learn-mode-select");
+const learnPlayerCount = document.querySelector("#learn-player-count");
+const learnScenario = document.querySelector("#learn-scenario");
+const learnGoal = document.querySelector("#learn-goal");
+const learnExperience = document.querySelector("#learn-experience");
+const lessonStatus = document.querySelector("#lesson-status");
+const lessonOutput = document.querySelector("#lesson-output");
 
 // Article Reader Modal Elements
 const articleModal = document.querySelector("#article-modal");
@@ -117,14 +127,17 @@ function showRoute() {
   const hash = window.location.hash;
   const isChat = hash === "#chat";
   const isFeed = hash === "#feed";
-  const isHome = !isChat && !isFeed;
+  const isLearn = hash === "#learn";
+  const isHome = !isChat && !isFeed && !isLearn;
 
   landingView.hidden = !isHome;
   feedView.hidden = !isFeed;
+  learnView.hidden = !isLearn;
   chatView.hidden = !isChat;
 
   document.body.classList.toggle("is-chat", isChat);
   document.body.classList.toggle("is-feed", isFeed);
+  document.body.classList.toggle("is-learn", isLearn);
 
   if (isChat) {
     document.title = "QuestMind — Table-side Companion";
@@ -137,6 +150,11 @@ function showRoute() {
     topbarRoute.dataset.route = "chat";
     topbarRoute.innerHTML = "ENTER QUESTMIND <span>↗</span>";
     renderNewsFeed();
+  } else if (isLearn) {
+    document.title = "QuestMind — Follow Along Lessons";
+    topbarRoute.href = "#chat";
+    topbarRoute.dataset.route = "chat";
+    topbarRoute.innerHTML = "ENTER QUESTMIND <span>↗</span>";
   } else {
     document.title = "QuestMind — Your Table-side Co-pilot";
     topbarRoute.href = "#chat";
@@ -151,6 +169,7 @@ routeLinks.forEach((link) => link.addEventListener("click", (event) => {
   const route = link.dataset.route;
   if (route === "chat") history.pushState(null, "", "#chat");
   else if (route === "feed") history.pushState(null, "", "#feed");
+  else if (route === "learn") history.pushState(null, "", "#learn");
   else if (route === "home") history.pushState(null, "", "/");
   showRoute();
 }));
@@ -159,7 +178,97 @@ window.addEventListener("popstate", showRoute);
 
 for (const game of games) {
   gameSelect.add(new Option(game.name, game.name));
+  learnGameSelect.add(new Option(game.name, game.name));
 }
+
+function updateLearnModes() {
+  const game = games.find(({ name }) => name === learnGameSelect.value) ?? games[0];
+  learnModeSelect.replaceChildren(...game.modes.map((mode) => new Option(mode, mode)));
+  const options = getPlayerOptions(game, learnModeSelect.value);
+  if (!options.includes(Number(learnPlayerCount.value))) learnPlayerCount.value = String(options[0]);
+  learnPlayerCount.min = String(options[0]);
+  learnPlayerCount.max = String(options.at(-1));
+}
+
+learnGameSelect.addEventListener("change", updateLearnModes);
+learnModeSelect.addEventListener("change", updateLearnModes);
+updateLearnModes();
+
+function renderLesson(lesson) {
+  lessonOutput.replaceChildren();
+  const heading = document.createElement("div");
+  heading.className = "lesson-heading";
+  heading.innerHTML = `<h3></h3><p></p>`;
+  heading.querySelector("h3").textContent = lesson.title;
+  heading.querySelector("p").textContent = lesson.subtitle;
+  lessonOutput.append(heading);
+  for (const section of lesson.sections) {
+    const card = document.createElement("article");
+    card.className = `lesson-card lesson-${section.type}`;
+    const title = document.createElement("h4");
+    title.textContent = section.title;
+    card.append(title);
+    if (section.body) {
+      const body = document.createElement("p");
+      body.textContent = section.body;
+      card.append(body);
+    }
+    if (Array.isArray(section.steps)) {
+      const list = document.createElement("ol");
+      section.steps.forEach((step) => {
+        const item = document.createElement("li");
+        item.textContent = step;
+        list.append(item);
+      });
+      card.append(list);
+    }
+    if (Array.isArray(section.options)) {
+      const list = document.createElement("ul");
+      section.options.forEach((option) => {
+        const item = document.createElement("li");
+        item.textContent = option;
+        if (option === section.answer) item.className = "lesson-answer";
+        list.append(item);
+      });
+      card.append(list);
+      const explanation = document.createElement("p");
+      explanation.className = "lesson-explanation";
+      explanation.textContent = `Why: ${section.explanation}`;
+      card.append(explanation);
+    }
+    lessonOutput.append(card);
+  }
+}
+
+learnForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  lessonStatus.textContent = "BUILDING A SCENARIO-BASED LESSON…";
+  lessonOutput.replaceChildren();
+  const button = learnForm.querySelector("button[type=submit]");
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/lesson", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        game: learnGameSelect.value,
+        mode: learnModeSelect.value,
+        playerCount: Number(learnPlayerCount.value),
+        scenario: learnScenario.value,
+        goal: learnGoal.value,
+        experience: learnExperience.value,
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload?.error?.message ?? "Could not build the lesson.");
+    renderLesson(payload);
+    lessonStatus.textContent = "READY / CONTINUE FROM YOUR NEXT TABLE MOMENT";
+  } catch (error) {
+    lessonStatus.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
 
 function renderPlayers(game) {
   const current = Number(playerOptions.querySelector("input:checked")?.value ?? 4);
